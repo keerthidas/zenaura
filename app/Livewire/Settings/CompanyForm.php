@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\CompanySetting;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -47,7 +48,15 @@ class CompanyForm extends Component
 
     public $logo = null;
 
+    public $signature = null;
+
+    public $stamp = null;
+
     public ?string $existingLogo = null;
+
+    public ?string $existingSignature = null;
+
+    public ?string $existingStamp = null;
 
     public function mount(): void
     {
@@ -59,6 +68,8 @@ class CompanyForm extends Component
         $this->default_vat_percent = (string) $settings->default_vat_percent;
         $this->default_validity_days = (int) $settings->default_validity_days;
         $this->existingLogo = $settings->logo_path;
+        $this->existingSignature = $settings->signature_path;
+        $this->existingStamp = $settings->stamp_path;
         $this->website = (string) ($settings->website ?? '');
         $this->bank_details = (string) ($settings->bank_details ?? '');
     }
@@ -82,26 +93,72 @@ class CompanyForm extends Component
             'currency' => ['required', 'string', 'max:10'],
             'default_terms' => ['nullable', 'string'],
             'logo' => ['nullable', 'image', 'max:4096'],
+            'signature' => ['nullable', 'image', 'max:4096'],
+            'stamp' => ['nullable', 'image', 'max:4096'],
         ]);
 
         $settings = CompanySetting::current();
-        unset($data['logo']);
+        unset($data['logo'], $data['signature'], $data['stamp']);
 
-        if ($this->logo) {
-            if ($settings->logo_path) {
-                Storage::disk('public')->delete($settings->logo_path);
-            }
-            $data['logo_path'] = $this->logo->store('company', 'public');
-            $this->existingLogo = $data['logo_path'];
-            $this->logo = null;
-        }
+        $this->existingLogo = $this->storeBrandingImage($this->logo, $settings->logo_path, 'logo_path', $data);
+        $this->existingSignature = $this->storeBrandingImage($this->signature, $settings->signature_path, 'signature_path', $data);
+        $this->existingStamp = $this->storeBrandingImage($this->stamp, $settings->stamp_path, 'stamp_path', $data);
+
+        $this->logo = null;
+        $this->signature = null;
+        $this->stamp = null;
 
         $settings->update($data);
-        session()->flash('success', 'Company settings saved.');
+        flash_app_toast($this, 'Settings saved.');
+    }
+
+    public function useDefaultLogo(): void
+    {
+        $this->clearBrandingImage('logo_path', 'existingLogo');
+    }
+
+    public function useDefaultSignature(): void
+    {
+        $this->clearBrandingImage('signature_path', 'existingSignature');
+    }
+
+    public function useDefaultStamp(): void
+    {
+        $this->clearBrandingImage('stamp_path', 'existingStamp');
     }
 
     public function render()
     {
         return view('livewire.settings.company-form');
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function storeBrandingImage(mixed $upload, ?string $currentPath, string $column, array &$data): ?string
+    {
+        if (! $upload instanceof UploadedFile) {
+            return $currentPath;
+        }
+
+        if ($currentPath) {
+            Storage::disk('public')->delete($currentPath);
+        }
+
+        $path = $upload->store('company', 'public');
+        $data[$column] = $path;
+
+        return $path;
+    }
+
+    private function clearBrandingImage(string $column, string $existingProperty): void
+    {
+        $settings = CompanySetting::current();
+        $path = $settings->{$column};
+        if ($path) {
+            Storage::disk('public')->delete($path);
+            $settings->update([$column => null]);
+        }
+        $this->{$existingProperty} = null;
     }
 }

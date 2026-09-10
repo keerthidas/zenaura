@@ -62,15 +62,49 @@
                 <input wire:model="default_unit" class="field">
             </div>
         </div>
-        <div>
-            <label class="label">Logo</label>
-            <input type="file" wire:model="logo" accept="image/*" class="block text-sm">
-            @error('logo') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-            @if ($logo)
-                <img src="{{ $logo->temporaryUrl() }}" class="mt-3 h-16 object-contain" alt="">
-            @elseif ($existingLogo)
-                <img src="{{ public_media_url($existingLogo) }}" class="mt-3 h-16 object-contain" alt="Company logo">
-            @endif
+        <div class="grid gap-4 sm:grid-cols-3">
+            <div>
+                <label class="label">Logo</label>
+                <input type="file" wire:model="logo" accept="image/*" class="block text-sm">
+                @error('logo') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                @if ($logo)
+                    <img src="{{ $logo->temporaryUrl() }}" class="mt-3 h-16 object-contain" alt="">
+                @elseif ($existingLogo)
+                    <img src="{{ public_media_url($existingLogo) }}" class="mt-3 h-16 object-contain" alt="Company logo">
+                    <button type="button" wire:click="useDefaultLogo" class="mt-2 text-xs text-stone-500 underline-offset-2 hover:underline">Remove — use default</button>
+                @else
+                    <img src="{{ asset('images/logo.png') }}" class="mt-3 h-16 object-contain" alt="Default logo">
+                    <p class="mt-1 text-xs text-stone-500">Using default logo</p>
+                @endif
+            </div>
+            <div>
+                <label class="label">Signature</label>
+                <input type="file" wire:model="signature" accept="image/*" class="block text-sm">
+                @error('signature') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                @if ($signature)
+                    <img src="{{ $signature->temporaryUrl() }}" class="mt-3 h-16 object-contain" alt="">
+                @elseif ($existingSignature)
+                    <img src="{{ public_media_url($existingSignature) }}" class="mt-3 h-16 object-contain" alt="Signature">
+                    <button type="button" wire:click="useDefaultSignature" class="mt-2 text-xs text-stone-500 underline-offset-2 hover:underline">Remove — use default</button>
+                @else
+                    <img src="{{ asset('images/signature.png') }}" class="mt-3 h-16 object-contain" alt="Default signature">
+                    <p class="mt-1 text-xs text-stone-500">Using default signature</p>
+                @endif
+            </div>
+            <div>
+                <label class="label">Co's stamp</label>
+                <input type="file" wire:model="stamp" accept="image/*" class="block text-sm">
+                @error('stamp') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                @if ($stamp)
+                    <img src="{{ $stamp->temporaryUrl() }}" class="mt-3 h-20 object-contain" alt="">
+                @elseif ($existingStamp)
+                    <img src="{{ public_media_url($existingStamp) }}" class="mt-3 h-20 object-contain" alt="Company stamp">
+                    <button type="button" wire:click="useDefaultStamp" class="mt-2 text-xs text-stone-500 underline-offset-2 hover:underline">Remove — use default</button>
+                @else
+                    <img src="{{ asset('images/costamp.png') }}" class="mt-3 h-20 object-contain" alt="Default stamp">
+                    <p class="mt-1 text-xs text-stone-500">Using default stamp</p>
+                @endif
+            </div>
         </div>
         <div>
             <label class="label">Default quotation terms</label>

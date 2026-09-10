@@ -5,7 +5,7 @@
             Saving quotation…
         </div>
     </div>
-    <div class="sticky top-0 z-20 mb-5 overflow-hidden rounded-2xl bg-zenora-dark text-white shadow-lg">
+    <div class="quote-summary-bar mb-5 overflow-hidden rounded-2xl bg-zenora-dark text-white shadow-lg">
         <div class="flex flex-wrap items-stretch">
             <div class="min-w-[12rem] flex-1 px-5 py-4">
                 <p class="text-[11px] uppercase tracking-[0.2em] text-teal-200/80">Quotation</p>
@@ -37,7 +37,9 @@
             <a href="{{ route('quotations.index') }}" class="text-sm text-zenora hover:underline" wire:navigate>← Quotations</a>
             <h1 class="mt-2 font-display text-3xl">{{ $quotation?->exists ? $quotation->number : ($revisingFromId ? $number : 'New quotation') }}</h1>
             @if ($revisingFromId && ! $quotation?->exists)
-                <p class="mt-1 text-sm text-copper">Revision of the original quote. It is only saved when you click Save quotation.</p>
+                <p class="mt-1 text-sm text-copper">This is a revision. It gets a new quotation number and is only saved when you click Save quotation.</p>
+            @elseif ($quotation?->exists && $quotation->isDraft())
+                <p class="text-sm text-stone-500">Draft — saving keeps the same quotation number. Headings are optional.</p>
             @else
                 <p class="text-sm text-stone-500">Type a product code on a row to pick from the catalogue. Headings are optional.</p>
             @endif

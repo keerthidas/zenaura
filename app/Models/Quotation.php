@@ -102,6 +102,11 @@ class Quotation extends Model
         return $this->number;
     }
 
+    public function isDraft(): bool
+    {
+        return $this->status === 'draft';
+    }
+
     public function isAccepted(): bool
     {
         return $this->status === 'accepted';

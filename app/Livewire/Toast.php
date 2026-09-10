@@ -9,35 +9,31 @@ class Toast extends Component
 {
     public bool $show = false;
 
-    public string $eyebrow = 'Done';
+    public string $message = '';
 
-    public string $title = '';
-
-    public ?string $body = null;
+    public string $type = 'success';
 
     public function mount(): void
     {
         $toast = session('toast');
         if (! is_array($toast) && session('success')) {
-            $toast = [
-                'eyebrow' => 'Done',
-                'title' => (string) session('success'),
-                'body' => null,
-            ];
+            $toast = ['message' => (string) session('success'), 'type' => 'success'];
+        }
+        if (! is_array($toast) && session('error')) {
+            $toast = ['message' => (string) session('error'), 'type' => 'error'];
         }
 
-        if (is_array($toast) && ! empty($toast['title'])) {
+        if (is_array($toast) && ! empty($toast['message'] ?? $toast['title'] ?? null)) {
             $this->present($toast);
         }
     }
 
     #[On('app-toast')]
-    public function onToast(string $eyebrow = 'Done', string $title = '', ?string $body = null): void
+    public function onToast(string $message = '', string $type = 'success'): void
     {
         $this->present([
-            'eyebrow' => $eyebrow,
-            'title' => $title,
-            'body' => $body,
+            'message' => $message,
+            'type' => $type,
         ]);
     }
 
@@ -47,14 +43,13 @@ class Toast extends Component
     }
 
     /**
-     * @param  array{eyebrow?: string, title?: string, body?: string|null}  $toast
+     * @param  array{message?: string, title?: string, type?: string}  $toast
      */
     private function present(array $toast): void
     {
-        $this->eyebrow = (string) ($toast['eyebrow'] ?? 'Done');
-        $this->title = (string) ($toast['title'] ?? '');
-        $this->body = isset($toast['body']) ? (string) $toast['body'] : null;
-        $this->show = $this->title !== '';
+        $this->message = (string) ($toast['message'] ?? $toast['title'] ?? '');
+        $this->type = ($toast['type'] ?? 'success') === 'error' ? 'error' : 'success';
+        $this->show = $this->message !== '';
     }
 
     public function render()

@@ -67,6 +67,13 @@ if (! function_exists('pdf_public_data_uri')) {
     }
 }
 
+if (! function_exists('pdf_brand_data_uri')) {
+    function pdf_brand_data_uri(?string $uploadedPath, string $defaultPublicPath): ?string
+    {
+        return pdf_data_uri($uploadedPath) ?: pdf_public_data_uri($defaultPublicPath);
+    }
+}
+
 if (! function_exists('invoice_qty_unit')) {
     function invoice_qty_unit(?string $unit): string
     {
@@ -95,17 +102,10 @@ if (! function_exists('zenora_emirates')) {
 }
 
 if (! function_exists('flash_app_toast')) {
-    /**
-     * @param  array{eyebrow?: string, title: string, body?: string|null}  $toast
-     */
-    function flash_app_toast(object $component, array $toast): void
+    function flash_app_toast(object $component, string $message, string $type = 'success'): void
     {
-        session()->flash('toast', $toast);
-        $component->dispatch(
-            'app-toast',
-            eyebrow: (string) ($toast['eyebrow'] ?? 'Done'),
-            title: (string) ($toast['title'] ?? ''),
-            body: $toast['body'] ?? null,
-        );
+        $type = $type === 'error' ? 'error' : 'success';
+        session()->flash('toast', compact('message', 'type'));
+        $component->dispatch('app-toast', message: $message, type: $type);
     }
 }

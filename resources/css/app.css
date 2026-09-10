@@ -81,11 +81,29 @@
     }
 }
 
+.quote-summary-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.app-toast-host {
+    position: relative;
+    z-index: 2147483647;
+}
+
+.app-toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2147483647;
+}
+
 @keyframes toast-shrink {
     from { width: 100%; }
     to { width: 0%; }
 }
 
 .toast-timer {
-    animation: toast-shrink 7s linear forwards;
+    animation: toast-shrink 4s linear forwards;
 }

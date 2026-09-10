@@ -4,42 +4,43 @@
     <meta charset="utf-8">
     <title>{{ $quotation->number }}</title>
     <style>
-        @page { margin: 108px 36px 62px 36px; }
+        @page { margin: 80px 36px 62px 36px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
         .muted { color: #555; }
         .right { text-align: right; }
+        table, th, td { font-size: 10px; }
         table { width: 100%; border-collapse: collapse; }
-        .pdf-header { position: fixed; top: -96px; left: 0; right: 0; }
+        .pdf-header { position: fixed; top: -70px; left: 0; right: 0; }
         .pdf-header td { vertical-align: top; }
         .logo { max-height: 56px; max-width: 220px; }
         .co-contact { font-size: 10px; line-height: 1.5; color: #222; text-align: right; }
-        .doc-title { font-size: 22px; font-weight: bold; text-align: center; margin: 10px 0 0; color: #111; }
-        .doc-sub { text-align: center; font-size: 8.5px; color: #444; margin-top: 2px; }
-        .pdf-footer { position: fixed; bottom: -50px; left: 0; right: 0; height: 40px; border-top: 0.8px solid #bbb; padding-top: 6px; font-size: 7.5px; color: #444; }
+        .doc-title { font-size: 22px; font-weight: bold; text-align: center; margin: 0 0 12px; color: #111; }
+        .doc-sub { text-align: center; font-size: 10px; color: #444; margin-top: 2px; }
+        .pdf-footer { position: fixed; bottom: -50px; left: 0; right: 0; height: 40px; border-top: 0.8px solid #bbb; padding-top: 6px; font-size: 10px; color: #444; }
         .page-num:after { content: counter(page); }
         h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: 1px; color: #0e3d44; }
         .meta { margin-bottom: 10px; }
-        .meta td { vertical-align: top; padding: 0; }
-        .box { border: 1px solid #d5d5d5; padding: 8px 10px; }
-        .box-title { background: #0e3d44; color: #fff; font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 8px; }
-        .kv td { padding: 1px 0; }
-        .items th { background: #0e3d44; color: #fff; font-size: 7.5px; text-transform: uppercase; padding: 7px 4px; }
-        .items td { padding: 5px 4px; border-bottom: 0.5px solid #ddd; vertical-align: middle; }
-        .heading td { background: #4a4a4a; color: #fff; font-weight: bold; font-size: 9px; padding: 6px 4px; }
-        .subhead td { background: #d9d9d9; font-weight: bold; font-size: 8px; }
+        .meta td { vertical-align: top; padding: 0; font-size: 10px; }
+        .box { border: 1px solid #d5d5d5; padding: 8px 10px; font-size: 10px; line-height: 1.4; }
+        .box-title { background: #0e3d44; color: #fff; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 8px; }
+        .kv td { padding: 3px 0; font-size: 10px; }
+        .items th { background: #0e3d44; color: #fff; font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 5px 3px 6px; }
+        .items td { padding: 4px 3px; border-bottom: 0.5px solid #ddd; vertical-align: middle; font-size: 10px; }
+        .heading td { background: #4a4a4a; color: #fff; font-weight: bold; font-size: 10px; padding: 6px 4px; }
+        .subhead td { background: #d9d9d9; font-weight: bold; font-size: 10px; }
         .thumb { width: 32px; height: 32px; object-fit: cover; }
-        .totals td { padding: 3px 4px; border: none; }
-        .grand { font-size: 11px; font-weight: bold; }
-        .terms { font-size: 8px; color: #555; margin-top: 12px; }
+        .totals td { padding: 4px 6px; border: none; font-size: 10px; }
+        .grand { font-size: 10px; font-weight: bold; }
+        .terms { font-size: 10px; color: #555; margin-top: 12px; line-height: 1.5; }
         img { border: 0; }
     </style>
 </head>
 <body>
     @php
         $logoDataUri = $logoDataUri ?? null;
-        $lhPhone = '+971 54 783 4673';
-        $lhEmail = 'zenauratrading@outlook.com';
-        $lhAddress = '26th Floor, Amber Gem Tower, Ajman';
+        $lhPhone = trim((string) $settings->phone);
+        $lhEmail = trim((string) $settings->email);
+        $lhAddress = collect([$settings->address, $settings->emirate])->filter()->implode(', ');
     @endphp
     <div class="pdf-header">
         <table>
@@ -52,33 +53,27 @@
                     @endif
                 </td>
                 <td width="45%" class="co-contact">
-                    {{ $lhPhone }}<br>
-                    {{ $lhEmail }}<br>
-                    {{ $lhAddress }}
+                    @if ($lhPhone) {{ $lhPhone }}<br> @endif
+                    @if ($lhEmail) {{ $lhEmail }}<br> @endif
+                    @if ($lhAddress) {{ $lhAddress }} @endif
                 </td>
             </tr>
         </table>
-        <div class="doc-title">Quotation</div>
-        <div class="doc-sub">
-            {{ $quotation->number }}
-            @if ($quotation->revision)
-                &nbsp;·&nbsp; Rev {{ $quotation->revisionLabel() }}
-            @endif
-            &nbsp;·&nbsp; {{ $quotation->quote_date->format('d/m/Y') }}
-        </div>
     </div>
 
     <div class="pdf-footer">
         <table>
             <tr>
                 <td width="78%">
-                    {{ $lhAddress }} &nbsp;|&nbsp; {{ $lhPhone }} &nbsp;|&nbsp; {{ $lhEmail }}
+                    {{ collect([$lhAddress, $lhPhone, $lhEmail])->filter()->implode(' | ') }}
                     @if ($settings->trn) &nbsp;|&nbsp; VAT No. {{ $settings->trn }} @endif
                 </td>
                 <td width="22%" class="right">Page <span class="page-num"></span></td>
             </tr>
         </table>
     </div>
+
+    <div class="doc-title">Quotation</div>
 
     <table class="meta">
         <tr>

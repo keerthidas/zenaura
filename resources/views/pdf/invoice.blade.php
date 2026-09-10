@@ -6,6 +6,7 @@
     <style>
         @page { margin: 32px 34px 88px 34px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
+        table, th, td { font-size: 10px; }
         table { width: 100%; border-collapse: collapse; }
         .right { text-align: right; }
         .center { text-align: center; }
@@ -16,23 +17,23 @@
         .boxes { margin-bottom: 8px; }
         .boxes td { vertical-align: top; }
         .box { border: 0.8px solid #000; }
-        .box .cap { background: #e6e6e6; padding: 4px 6px; font-size: 9.5px; border-bottom: 0.8px solid #000; }
-        .box .body { padding: 5px 6px; font-size: 9.5px; line-height: 1.4; min-height: 62px; }
-        .kv td { border: 0.8px solid #000; padding: 3px 5px; font-size: 9.5px; }
+        .box .cap { background: #e6e6e6; padding: 4px 6px; font-size: 10px; border-bottom: 0.8px solid #000; }
+        .box .body { padding: 5px 6px; font-size: 10px; line-height: 1.4; min-height: 62px; }
+        .kv td { border: 0.8px solid #000; padding: 3px 5px; font-size: 10px; }
         .kv .k { background: #e6e6e6; width: 38%; }
         .kv .v { font-weight: bold; }
-        .kv .currency { font-size: 14px; }
+        .kv .currency { font-size: 10px; }
         .meta { margin-bottom: 8px; }
-        .meta td { border: 0.8px solid #000; padding: 4px 6px; vertical-align: top; font-size: 9.5px; }
+        .meta td { border: 0.8px solid #000; padding: 4px 6px; vertical-align: top; font-size: 10px; }
         .meta .k { background: #e6e6e6; width: 16%; }
         .meta .v { width: 17%; }
         .items { margin-top: 2px; }
-        .items th { font-size: 8.5px; font-weight: bold; color: #111; padding: 5px 3px 6px; border-bottom: 0.8px solid #000; vertical-align: bottom; }
-        .items td { padding: 4px 3px; border-bottom: 0.4px solid #cfcfcf; vertical-align: top; font-size: 9px; }
-        .items .code { color: #0e3d44; font-weight: bold; word-wrap: break-word; }
-        .group td { color: #1d4ed8; font-weight: bold; font-size: 9.5px; border-bottom: none; padding-top: 7px; }
-        .subhead td { font-weight: bold; font-size: 9px; }
-        .totals-bar td { background: #e6e6e6; border: 0.8px solid #000; padding: 5px 4px; font-size: 9.5px; }
+        .items th { font-size: 10px; font-weight: bold; color: #111; padding: 5px 3px 6px; border-bottom: 0.8px solid #000; vertical-align: bottom; }
+        .items td { padding: 4px 3px; border-bottom: 0.4px solid #cfcfcf; vertical-align: top; font-size: 10px; }
+        .items .code { color: #0e3d44; font-weight: bold; font-size: 10px; word-wrap: break-word; }
+        .group td { color: #1d4ed8; font-weight: bold; font-size: 10px; border-bottom: none; padding-top: 7px; }
+        .subhead td { font-weight: bold; font-size: 10px; }
+        .totals-bar td { background: #e6e6e6; border: 0.8px solid #000; padding: 5px 4px; font-size: 10px; }
         .totals-bar .amt { background: #fff; font-weight: bold; }
         .sum-wrap { margin-top: 14px; page-break-inside: avoid; }
         .sum { border: 1.2px solid #000; }
@@ -43,13 +44,15 @@
         .sum .net .lab { background: #e6e6e6; }
         .signs { margin-top: 36px; page-break-inside: avoid; }
         .signs td { vertical-align: bottom; padding: 0; }
-        .sign-box { width: 210px; }
-        .sign-img { height: 52px; max-width: 170px; display: block; margin: 0 0 8px 0; }
-        .stamp-img { height: 98px; max-width: 110px; display: block; margin: 0 0 4px 0; }
-        .sign-label { border-top: 0.9px solid #111; padding: 5px 0 0 0; font-size: 11px; }
+        .sign-box { width: 220px; margin: 0 auto; }
+        .sign-media { width: 100%; margin-bottom: 4px; }
+        .sign-media td { text-align: center; vertical-align: bottom; }
+        .sign-img { height: 64px; max-width: 180px; }
+        .stamp-img { height: 140px; }
+        .sign-label { border-top: 0.9px solid #111; padding: 5px 0 0 0; font-size: 10px; }
         .doc-footer { position: fixed; left: 0; right: 0; bottom: -78px; height: 72px; }
         .note { font-size: 10px; line-height: 1.5; color: #222; }
-        .page-meta { margin-top: 8px; font-size: 9px; color: #333; }
+        .page-meta { margin-top: 8px; font-size: 10px; color: #333; }
         .page-num:after { content: counter(page); }
         img { border: 0; }
     </style>
@@ -69,9 +72,9 @@
         $vatTotal = (float) $quotation->vat_total;
         $grand = (float) $quotation->grand_total;
         $discountCell = $discount > 0 ? '-'.number_format($discount, 2) : number_format(0, 2);
-        $lhPhone = '+971 54 783 4673';
-        $lhEmail = 'zenauratrading@outlook.com';
-        $lhAddress = '26th Floor, Amber Gem Tower, Ajman';
+        $lhPhone = trim((string) $settings->phone);
+        $lhEmail = trim((string) $settings->email);
+        $lhAddress = collect([$settings->address, $settings->emirate])->filter()->implode(', ');
         $invoicedLines = collect([
             $client->address,
             $client->emirate,
@@ -84,8 +87,7 @@
 
     <div class="doc-footer">
         <div class="note">
-            This is a system generated invoice. Hence, no stamp or signature is required.<br>
-            Please send all remittances for payments and queries to:<br>
+            Please send all remittances for payments and queries to:
             <strong>{{ $lhEmail }}</strong>
         </div>
         <table class="page-meta">
@@ -106,9 +108,9 @@
                 @endif
             </td>
             <td width="45%" class="co-contact">
-                {{ $lhPhone }}<br>
-                {{ $lhEmail }}<br>
-                {{ $lhAddress }}
+                @if ($lhPhone) {{ $lhPhone }}<br> @endif
+                @if ($lhEmail) {{ $lhEmail }}<br> @endif
+                @if ($lhAddress) {{ $lhAddress }} @endif
             </td>
         </tr>
     </table>
@@ -284,9 +286,9 @@
             <td width="50%">
                 <div class="sign-box">
                     @if ($signatureDataUri)
-                        <img src="{{ $signatureDataUri }}" class="sign-img">
+                        <table class="sign-media"><tr><td class="center"><img src="{{ $signatureDataUri }}" class="sign-img"></td></tr></table>
                     @else
-                        <div style="height: 52px;"></div>
+                        <div style="height: 64px;"></div>
                     @endif
                     <div class="sign-label">Signature</div>
                 </div>
@@ -294,9 +296,9 @@
             <td width="50%">
                 <div class="sign-box">
                     @if ($stampDataUri)
-                        <img src="{{ $stampDataUri }}" class="stamp-img">
+                        <table class="sign-media"><tr><td class="center"><img src="{{ $stampDataUri }}" class="stamp-img"></td></tr></table>
                     @else
-                        <div style="height: 98px;"></div>
+                        <div style="height: 140px;"></div>
                     @endif
                     <div class="sign-label">Co's Stamp</div>
                 </div>

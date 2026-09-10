@@ -1,41 +1,40 @@
-<div>
+<div class="app-toast-host">
     @if ($show)
         <div
-            wire:key="toast-{{ md5($title.$eyebrow) }}"
-            x-data="{ show: true }"
-            x-init="setTimeout(() => { show = false; $wire.dismiss() }, 7000)"
+            wire:key="toast-{{ md5($type.$message) }}"
+            x-data="{ show: false }"
+            x-init="$nextTick(() => show = true); setTimeout(() => { show = false; setTimeout(() => $wire.dismiss(), 200) }, 4000)"
             x-show="show"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
-            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0 translate-y-2"
-            class="fixed inset-x-0 top-4 z-[120] flex justify-center px-4 sm:top-6"
+            x-transition:enter="transform transition ease-out duration-300"
+            x-transition:enter-start="translate-x-full opacity-0"
+            x-transition:enter-end="translate-x-0 opacity-100"
+            x-transition:leave="transform transition ease-in duration-200"
+            x-transition:leave-start="translate-x-0 opacity-100"
+            x-transition:leave-end="translate-x-full opacity-0"
+            class="app-toast pointer-events-none sm:top-6 sm:right-6"
             role="status"
             aria-live="assertive"
         >
-            <div class="w-full max-w-lg overflow-hidden rounded-3xl bg-zenora-dark text-white shadow-[0_28px_80px_-24px_rgba(14,61,68,0.95)] ring-4 ring-copper">
-                <div class="flex items-start gap-4 p-5">
-                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-copper shadow-inner">
-                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.6">
+            <div @class([
+                'pointer-events-auto flex w-[min(22rem,calc(100vw-2rem))] items-start gap-3 rounded-lg px-4 py-3 text-white shadow-lg',
+                'bg-emerald-600' => $type !== 'error',
+                'bg-red-600' => $type === 'error',
+            ])>
+                <div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center">
+                    @if ($type === 'error')
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M12 5a7 7 0 100 14 7 7 0 000-14z" />
+                        </svg>
+                    @else
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-copper">{{ $eyebrow }}</p>
-                        <p class="mt-1 break-all font-display text-3xl leading-none">{{ $title }}</p>
-                        @if ($body)
-                            <p class="mt-2 text-sm leading-snug text-teal-50">{{ $body }}</p>
-                        @endif
-                    </div>
-                    <button type="button" wire:click="dismiss" class="rounded-full p-1 text-teal-100/80 hover:bg-white/10 hover:text-white" aria-label="Dismiss">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                    @endif
                 </div>
-                <div class="h-1.5 bg-black/25">
-                    <div class="toast-timer h-full bg-copper"></div>
-                </div>
+                <p class="min-w-0 flex-1 text-sm font-medium leading-snug">{{ $message }}</p>
+                <button type="button" class="shrink-0 text-white/80 hover:text-white" x-on:click="show = false; $wire.dismiss()" aria-label="Dismiss">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
             </div>
         </div>
     @endif

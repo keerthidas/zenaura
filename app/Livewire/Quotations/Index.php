@@ -38,6 +38,14 @@ class Index extends Component
 
     public function revise(int $id): void
     {
+        $quote = Quotation::findOrFail($id);
+
+        if ($quote->isDraft()) {
+            $this->redirect(route('quotations.edit', $quote), navigate: true);
+
+            return;
+        }
+
         $this->redirect(route('quotations.create', ['revise' => $id]), navigate: true);
     }
 
@@ -56,11 +64,7 @@ class Index extends Component
 
         $quote->update($payload);
         $quote->refresh();
-        flash_app_toast($this, [
-            'eyebrow' => 'Status changed',
-            'title' => $quote->number,
-            'body' => 'Now marked '.$status.($quote->invoice_number ? ' · Invoice '.$quote->invoice_number : ''),
-        ]);
+        flash_app_toast($this, 'Status updated.');
     }
 
     public function duplicate(int $id, QuotationNumberService $numbers): void
@@ -99,11 +103,7 @@ class Index extends Component
             return $quote;
         });
 
-        flash_app_toast($this, [
-            'eyebrow' => 'Quotation duplicated',
-            'title' => $copy->number,
-            'body' => 'A copy is ready to edit.',
-        ]);
+        flash_app_toast($this, 'Quotation copied.');
 
         $this->redirect(route('quotations.edit', $copy), navigate: true);
     }
@@ -111,11 +111,7 @@ class Index extends Component
     public function delete(int $id): void
     {
         Quotation::findOrFail($id)->delete();
-        flash_app_toast($this, [
-            'eyebrow' => 'Quotation archived',
-            'title' => 'Removed from the live list',
-            'body' => 'You can keep working on the remaining quotations.',
-        ]);
+        flash_app_toast($this, 'Quotation deleted.');
     }
 
     public function render()

@@ -13,7 +13,7 @@ class QuotationPdfController extends Controller
     {
         $quotation->load(['client', 'items.product.images']);
         $settings = CompanySetting::current();
-        $logoDataUri = pdf_public_data_uri('images/logo.png') ?: pdf_data_uri($settings->logo_path);
+        $logoDataUri = pdf_brand_data_uri($settings->logo_path, 'images/logo.png');
         $itemImages = [];
 
         foreach ($quotation->items as $item) {

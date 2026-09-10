@@ -60,9 +60,10 @@ class QuotationFlowTest extends TestCase
         $this->assertStringContainsString('Discount', $pdfHtml);
         $this->assertStringContainsString('10.00', $pdfHtml);
         $this->assertStringContainsString('29.00', $pdfHtml);
-        $this->assertStringContainsString('+971 54 783 4673', $pdfHtml);
-        $this->assertStringContainsString('zenauratrading@outlook.com', $pdfHtml);
-        $this->assertStringContainsString('26th Floor, Amber Gem Tower, Ajman', $pdfHtml);
+        $settings = \App\Models\CompanySetting::current();
+        $this->assertStringContainsString($settings->phone, $pdfHtml);
+        $this->assertStringContainsString($settings->email, $pdfHtml);
+        $this->assertStringContainsString($settings->address, $pdfHtml);
         $this->assertStringContainsString('Quotation', $pdfHtml);
         $this->assertStringNotContainsString('Salesperson', $pdfHtml);
         $this->assertStringNotContainsString('Sales admin', $pdfHtml);
@@ -153,6 +154,31 @@ class QuotationFlowTest extends TestCase
 
         $original = Quotation::first();
         $this->assertSame(1, Quotation::count());
+        $this->assertSame('draft', $original->status);
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\Quotations\Index::class)
+            ->call('revise', $original->id)
+            ->assertRedirect(route('quotations.edit', $original));
+
+        $this->assertSame(1, Quotation::count());
+        $this->assertSame($original->number, $original->fresh()->number);
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class, ['quotation' => $original])
+            ->set('notes', 'Still the same draft')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(1, Quotation::count());
+        $this->assertSame($original->number, Quotation::first()->number);
+        $this->assertNull(Quotation::first()->revision);
+
+        $original->update(['status' => 'sent']);
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class, ['quotation' => $original->fresh()])
+            ->assertRedirect(route('quotations.create', ['revise' => $original->id]));
 
         Livewire::actingAs($user)
             ->test(\App\Livewire\Quotations\Index::class)
@@ -251,15 +277,16 @@ class QuotationFlowTest extends TestCase
 
         $this->assertStringContainsString('Tax Invoice', $html);
         $this->assertStringNotContainsString('Consolidated', $html);
-        $this->assertStringContainsString('+971 54 783 4673', $html);
-        $this->assertStringContainsString('zenauratrading@outlook.com', $html);
-        $this->assertStringContainsString('26th Floor, Amber Gem Tower, Ajman', $html);
+        $settings = \App\Models\CompanySetting::current();
+        $this->assertStringContainsString($settings->phone, $html);
+        $this->assertStringContainsString($settings->email, $html);
+        $this->assertStringContainsString($settings->address, $html);
         $this->assertStringContainsString('Invoiced To:', $html);
         $this->assertStringContainsString('Shipped To:', $html);
         $this->assertStringContainsString($invoiceNumber, $html);
         $this->assertStringContainsString('Net Amount', $html);
         $this->assertStringContainsString('<td class="cur">AED</td>', $html);
-        $this->assertStringContainsString('system generated invoice', $html);
+        $this->assertStringContainsString('Please send all remittances', $html);
         $this->assertStringContainsString('Signature', $html);
         $this->assertStringContainsString("Co's Stamp", $html);
         $this->assertStringNotContainsString('Salesperson', $html);

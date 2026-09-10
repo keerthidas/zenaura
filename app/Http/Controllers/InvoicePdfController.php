@@ -16,9 +16,9 @@ class InvoicePdfController extends Controller
         $quotation->ensureInvoiceNumber();
         $quotation->load(['client', 'items']);
         $settings = CompanySetting::current();
-        $logoDataUri = pdf_public_data_uri('images/logo.png') ?: pdf_data_uri($settings->logo_path);
-        $signatureDataUri = pdf_public_data_uri('images/signature.png');
-        $stampDataUri = pdf_public_data_uri('images/costamp.png');
+        $logoDataUri = pdf_brand_data_uri($settings->logo_path, 'images/logo.png');
+        $signatureDataUri = pdf_brand_data_uri($settings->signature_path, 'images/signature.png');
+        $stampDataUri = pdf_brand_data_uri($settings->stamp_path, 'images/costamp.png');
 
         $pdf = Pdf::loadView('pdf.invoice', [
             'quotation' => $quotation,

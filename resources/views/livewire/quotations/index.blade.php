@@ -47,7 +47,7 @@
                     @forelse ($quotations as $quote)
                         <tr class="border-t border-stone-100 hover:bg-sand/30">
                             <td class="px-4 py-3">
-                                <a href="{{ route('quotations.edit', $quote) }}" class="font-semibold hover:text-zenora" wire:navigate>{{ $quote->number }}</a>
+                                <a href="{{ $quote->isDraft() ? route('quotations.edit', $quote) : route('quotations.create', ['revise' => $quote->id]) }}" class="font-semibold hover:text-zenora" wire:navigate>{{ $quote->number }}</a>
                                 @if ($quote->revision)
                                     <span class="ml-1 rounded bg-sand px-1.5 py-0.5 text-[10px] uppercase text-copper">{{ $quote->revisionLabel() }}</span>
                                 @endif
@@ -72,12 +72,14 @@
                                 @if ($quote->status === 'accepted')
                                     <a href="{{ route('quotations.invoice', $quote) }}" target="_blank" class="ml-2 text-zenora hover:underline">Invoice</a>
                                 @endif
-                                <button type="button" wire:click="revise({{ $quote->id }})"
-                                    wire:loading.attr="disabled" wire:target="revise({{ $quote->id }})"
-                                    class="ml-2 inline-flex items-center gap-1 text-zenora hover:underline disabled:cursor-wait disabled:opacity-55">
-                                    <x-spinner class="h-3 w-3" wire:loading wire:target="revise({{ $quote->id }})" />
-                                    Revise
-                                </button>
+                                @if (! $quote->isDraft())
+                                    <button type="button" wire:click="revise({{ $quote->id }})"
+                                        wire:loading.attr="disabled" wire:target="revise({{ $quote->id }})"
+                                        class="ml-2 inline-flex items-center gap-1 text-zenora hover:underline disabled:cursor-wait disabled:opacity-55">
+                                        <x-spinner class="h-3 w-3" wire:loading wire:target="revise({{ $quote->id }})" />
+                                        Revise
+                                    </button>
+                                @endif
                                 <button type="button" wire:click="duplicate({{ $quote->id }})"
                                     wire:loading.attr="disabled" wire:target="duplicate({{ $quote->id }})"
                                     class="ml-2 inline-flex items-center gap-1 text-zenora hover:underline disabled:cursor-wait disabled:opacity-55">

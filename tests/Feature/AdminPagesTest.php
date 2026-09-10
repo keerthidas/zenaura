@@ -25,7 +25,11 @@ class AdminPagesTest extends TestCase
         $this->get(route('clients.create'))->assertOk()->assertSee('TRN is required');
         $this->get(route('quotations.index'))->assertOk()->assertSee('Quotations');
         $this->get(route('quotations.create'))->assertOk()->assertSee('Line items');
-        $this->get(route('settings.company'))->assertOk()->assertSee('Company settings');
+        $this->get(route('settings.company'))
+            ->assertOk()
+            ->assertSee('Company settings')
+            ->assertSee('Signature')
+            ->assertSee('Using default stamp');
     }
 
     public function test_staff_can_view_a_stored_product_image(): void

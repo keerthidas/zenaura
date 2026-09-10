@@ -92,7 +92,19 @@ class QuotationEditor extends Component
 
         $reviseId = (int) request('revise');
         if ($reviseId && ! $quotation?->exists) {
+            $source = Quotation::query()->findOrFail($reviseId);
+            if ($source->isDraft()) {
+                $this->redirect(route('quotations.edit', $source), navigate: true);
+
+                return;
+            }
             $this->startRevision($reviseId, $numbers);
+
+            return;
+        }
+
+        if ($quotation?->exists && ! $quotation->isDraft()) {
+            $this->redirect(route('quotations.create', ['revise' => $quotation->id]), navigate: true);
 
             return;
         }
@@ -377,31 +389,37 @@ class QuotationEditor extends Component
     {
         $items = $this->preparedLines();
 
-        $this->validate([
-            'number' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('quotations', 'number')->ignore($this->quotation?->id)->whereNull('deleted_at'),
-            ],
-            'quote_date' => ['required', 'date'],
-            'valid_until' => ['nullable', 'date', 'after_or_equal:quote_date'],
-            'client_id' => ['required', 'exists:clients,id'],
-            'reference' => ['nullable', 'string', 'max:255'],
-            'delivery' => ['nullable', 'string', 'max:100'],
-            'payment_terms' => ['nullable', 'string', 'max:100'],
-            'delivery_availability' => ['nullable', 'string', 'max:100'],
-            'delivery_details' => ['nullable', 'string'],
-            'status' => ['required', Rule::in(Quotation::STATUSES)],
-            'notes' => ['nullable', 'string'],
-            'terms' => ['nullable', 'string'],
-            'linePhotos.*' => ['nullable', 'image', 'max:4096'],
-        ], [
-            'client_id.required' => 'Select a client (TRN is required on the client record).',
-        ]);
+        try {
+            $this->validate([
+                'number' => [
+                    'required',
+                    'string',
+                    'max:50',
+                    Rule::unique('quotations', 'number')->ignore($this->quotation?->id)->whereNull('deleted_at'),
+                ],
+                'quote_date' => ['required', 'date'],
+                'valid_until' => ['nullable', 'date', 'after_or_equal:quote_date'],
+                'client_id' => ['required', 'exists:clients,id'],
+                'reference' => ['nullable', 'string', 'max:255'],
+                'delivery' => ['nullable', 'string', 'max:100'],
+                'payment_terms' => ['nullable', 'string', 'max:100'],
+                'delivery_availability' => ['nullable', 'string', 'max:100'],
+                'delivery_details' => ['nullable', 'string'],
+                'status' => ['required', Rule::in(Quotation::STATUSES)],
+                'notes' => ['nullable', 'string'],
+                'terms' => ['nullable', 'string'],
+                'linePhotos.*' => ['nullable', 'image', 'max:4096'],
+            ], [
+                'client_id.required' => 'Select a client (TRN is required on the client record).',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            flash_app_toast($this, 'Could not save the quotation.', 'error');
+            throw $e;
+        }
 
         if ($items === []) {
             $this->addError('lines', 'Add at least one product.');
+            flash_app_toast($this, 'Could not save the quotation.', 'error');
 
             return;
         }
@@ -409,6 +427,7 @@ class QuotationEditor extends Component
         foreach ($items as $item) {
             if (trim((string) $item['code']) === '' || trim((string) $item['description']) === '') {
                 $this->addError('lines', 'Every line needs a code and description.');
+                flash_app_toast($this, 'Could not save the quotation.', 'error');
 
                 return;
             }
@@ -416,8 +435,6 @@ class QuotationEditor extends Component
 
         $totals = QuotationCalculator::totals($items);
         $meta = $numbers->resolveForSave($this->number, \Illuminate\Support\Carbon::parse($this->quote_date));
-
-        $wasNew = ! $this->quotation?->exists;
 
         $quotation = DB::transaction(function () use ($meta, $totals, $items, $invoices) {
             $payload = array_merge($meta, [
@@ -491,13 +508,7 @@ class QuotationEditor extends Component
 
         $this->quotation = $quotation;
         $this->number = $quotation->number;
-        flash_app_toast($this, [
-            'eyebrow' => $wasNew ? 'Quotation created' : 'Quotation updated',
-            'title' => $quotation->number,
-            'body' => $wasNew
-                ? 'Saved. You can open the PDF or keep editing.'
-                : 'All changes are on file.',
-        ]);
+        flash_app_toast($this, 'Quotation saved.');
 
         return $this->redirect(route('quotations.edit', $quotation), navigate: true);
     }

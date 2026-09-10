@@ -17,6 +17,8 @@ class CompanySetting extends Model
         'website',
         'trn',
         'logo_path',
+        'signature_path',
+        'stamp_path',
         'quote_prefix',
         'invoice_prefix',
         'default_vat_percent',
@@ -52,8 +54,13 @@ class CompanySetting extends Model
         );
     }
 
+    public static function flushCache(): void
+    {
+        static::$cached = null;
+    }
+
     protected static function booted(): void
     {
-        static::saved(fn () => static::$cached = null);
+        static::saved(fn () => static::flushCache());
     }
 }
