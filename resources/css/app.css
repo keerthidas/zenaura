@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/livewire/dist/**/*.js';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Fraunces', ui-serif, Georgia, serif;
+    --color-ink: #142426;
+    --color-zenora: #1a6b73;
+    --color-zenora-dark: #0e3d44;
+    --color-copper: #c46b3a;
+    --color-sand: #f4efe6;
+    --color-paper: #fbf8f3;
+}
+
+@layer base {
+    html {
+        @apply scroll-smooth;
+    }
+
+    body {
+        @apply bg-paper font-sans text-ink antialiased;
+    }
+}
+
+@layer components {
+    .field {
+        @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-ink shadow-sm outline-none transition placeholder:text-stone-400 focus:border-zenora focus:ring-2 focus:ring-zenora/20;
+    }
+
+    .field-compact {
+        @apply w-full rounded-md border border-stone-300 bg-white px-2 py-1.5 text-xs text-ink outline-none focus:border-zenora focus:ring-1 focus:ring-zenora/30;
+    }
+
+    .label {
+        @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-stone-500;
+    }
+
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:pointer-events-none disabled:opacity-55 disabled:cursor-wait;
+    }
+
+    .btn-primary {
+        @apply bg-zenora-dark text-white shadow-sm hover:bg-zenora;
+    }
+
+    .btn-copper {
+        @apply bg-copper text-white shadow-sm hover:bg-orange-800;
+    }
+
+    .btn-ghost {
+        @apply border border-stone-300 bg-white text-ink hover:bg-sand;
+    }
+
+    .card {
+        @apply rounded-2xl border border-stone-200/80 bg-white shadow-[0_12px_40px_-24px_rgba(20,36,38,0.45)];
+    }
+
+    .sheet-input {
+        @apply h-8 w-full border-0 bg-transparent px-1.5 text-xs text-ink outline-none placeholder:text-stone-400 focus:bg-sand/70;
+    }
+
+    .quote-table {
+        @apply w-full min-w-[1180px] border-separate border-spacing-0 text-xs;
+    }
+
+    .quote-table thead th {
+        @apply sticky top-0 z-10 bg-zenora-dark px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-white;
+    }
+
+    .quote-head td {
+        @apply bg-zenora-dark px-3 py-2 text-white;
+    }
+
+    .quote-sub {
+        @apply bg-stone-200 text-ink;
+    }
+}
+
+@keyframes toast-shrink {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+.toast-timer {
+    animation: toast-shrink 7s linear forwards;
+}
