@@ -200,6 +200,27 @@ class QuotationFlowTest extends TestCase
         $this->assertNotNull($revision);
         $this->assertSame($original->base_number.'-1R', $revision->number);
         $this->assertSame(1, (int) $revision->revision);
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\Quotations\Index::class)
+            ->call('delete', $revision->id);
+
+        $this->assertSoftDeleted($revision);
+        $this->assertSame(1, Quotation::count());
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->call('startRevision', $original->id)
+            ->assertSet('revisingFromId', $original->id)
+            ->assertSet('number', $original->base_number.'-2R')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(2, Quotation::count());
+        $next = Quotation::query()->where('parent_id', $original->id)->first();
+        $this->assertNotNull($next);
+        $this->assertSame($original->base_number.'-2R', $next->number);
+        $this->assertSame(2, (int) $next->revision);
     }
 
     public function test_status_can_be_updated_from_the_list(): void

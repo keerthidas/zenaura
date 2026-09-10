@@ -24,7 +24,7 @@ class QuotationNumberService
         $year = (int) $date->format('Y');
         $month = (int) $date->format('m');
 
-        $max = Quotation::query()
+        $max = Quotation::withTrashed()
             ->where('sequence_year', $year)
             ->where('sequence_month', $month)
             ->max('sequence_number');
@@ -68,20 +68,67 @@ class QuotationNumberService
      */
     public function revisionOf(Quotation $quotation): array
     {
-        $max = Quotation::query()
+        $max = Quotation::withTrashed()
             ->where('base_number', $quotation->base_number)
             ->max('revision');
 
         $revision = (int) $max + 1;
+        $number = $quotation->base_number.'-'.$revision.'R';
+
+        while ($this->numberTaken($number)) {
+            $revision++;
+            $number = $quotation->base_number.'-'.$revision.'R';
+        }
 
         return [
-            'number' => $quotation->base_number.'-'.$revision.'R',
+            'number' => $number,
             'base_number' => $quotation->base_number,
             'revision' => $revision,
             'sequence_year' => $quotation->sequence_year,
             'sequence_month' => $quotation->sequence_month,
             'sequence_number' => $quotation->sequence_number,
         ];
+    }
+
+    public function numberTaken(string $number, ?int $ignoreId = null): bool
+    {
+        return Quotation::withTrashed()
+            ->where('number', $number)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists();
+    }
+
+    /**
+     * @param  array{number: string, base_number: string, revision: ?int, sequence_year: ?int, sequence_month: ?int, sequence_number: ?int}  $meta
+     * @return array{number: string, base_number: string, revision: ?int, sequence_year: ?int, sequence_month: ?int, sequence_number: ?int}
+     */
+    public function ensureUnique(array $meta, ?int $ignoreId = null): array
+    {
+        while ($this->numberTaken($meta['number'], $ignoreId)) {
+            if (! empty($meta['revision'])) {
+                $meta['revision'] = (int) $meta['revision'] + 1;
+                $meta['number'] = $meta['base_number'].'-'.$meta['revision'].'R';
+
+                continue;
+            }
+
+            if ($meta['sequence_year'] && $meta['sequence_month'] && $meta['sequence_number'] !== null) {
+                [$year, $month, $seq] = $this->nextSequence(
+                    Carbon::create((int) $meta['sequence_year'], (int) $meta['sequence_month'], 1)
+                );
+                $meta['sequence_year'] = $year;
+                $meta['sequence_month'] = $month;
+                $meta['sequence_number'] = $seq;
+                $meta['number'] = $this->format($year, $month, $seq);
+                $meta['base_number'] = $meta['number'];
+
+                continue;
+            }
+
+            break;
+        }
+
+        return $meta;
     }
 
     /**

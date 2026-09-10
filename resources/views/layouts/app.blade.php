@@ -11,7 +11,7 @@
 </head>
 <body class="min-h-screen bg-paper text-ink">
     <div class="flex min-h-screen">
-        <aside class="hidden w-64 shrink-0 flex-col bg-zenora-dark text-sand lg:flex">
+        <aside class="hidden w-64 shrink-0 flex-col bg-zenora-dark text-sand lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-y-auto">
             <div class="px-6 pb-4 pt-7">
                 <p class="font-display text-2xl font-semibold tracking-tight text-white">Zenora</p>
                 <p class="mt-1 text-xs uppercase tracking-[0.18em] text-teal-200/80">Bathroom quotations</p>

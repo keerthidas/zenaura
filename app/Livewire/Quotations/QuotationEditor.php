@@ -389,13 +389,23 @@ class QuotationEditor extends Component
     {
         $items = $this->preparedLines();
 
+        if (! $this->quotation?->exists && $this->revisingFromId) {
+            $this->number = $numbers->revisionOf(
+                Quotation::query()->findOrFail($this->revisingFromId)
+            )['number'];
+        } elseif (! $this->quotation?->exists) {
+            $this->number = $numbers->ensureUnique(
+                $numbers->resolveForSave($this->number, \Illuminate\Support\Carbon::parse($this->quote_date))
+            )['number'];
+        }
+
         try {
             $this->validate([
                 'number' => [
                     'required',
                     'string',
                     'max:50',
-                    Rule::unique('quotations', 'number')->ignore($this->quotation?->id)->whereNull('deleted_at'),
+                    Rule::unique('quotations', 'number')->ignore($this->quotation?->id),
                 ],
                 'quote_date' => ['required', 'date'],
                 'valid_until' => ['nullable', 'date', 'after_or_equal:quote_date'],

@@ -27,7 +27,7 @@ class InvoiceNumberService
         $year = (int) $date->format('Y');
         $month = (int) $date->format('m');
 
-        $max = Quotation::query()
+        $max = Quotation::withTrashed()
             ->where('invoice_sequence_year', $year)
             ->where('invoice_sequence_month', $month)
             ->max('invoice_sequence_number');

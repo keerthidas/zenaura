@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
             'address' => 'Warehouse 12, Al Quoz Industrial Area',
             'emirate' => 'Dubai',
             'phone' => '+971 4 000 0000',
-            'email' => 'quotes@zenaura.ae',
+            'email' => 'zenauratrading@outlook.com',
             'trn' => '100000000000003',
             'quote_prefix' => 'ZN',
             'invoice_prefix' => 'ZS',
