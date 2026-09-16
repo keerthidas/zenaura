@@ -72,5 +72,9 @@ class DatabaseSeeder extends Seeder
         foreach ($products as $product) {
             Product::query()->updateOrCreate(['code' => $product['code']], $product + ['is_active' => true]);
         }
+
+        if (! app()->runningUnitTests()) {
+            $this->call(Mea2026CatalogSeeder::class);
+        }
     }
 }
