@@ -158,6 +158,8 @@ class QuotationFlowTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(\App\Livewire\Quotations\Index::class)
+            ->assertSee('Edit')
+            ->assertDontSee('Revise')
             ->call('revise', $original->id)
             ->assertRedirect(route('quotations.edit', $original));
 
@@ -182,6 +184,8 @@ class QuotationFlowTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(\App\Livewire\Quotations\Index::class)
+            ->assertSee('Revise')
+            ->assertDontSee('Edit')
             ->call('revise', $original->id)
             ->assertRedirect(route('quotations.create', ['revise' => $original->id]));
 

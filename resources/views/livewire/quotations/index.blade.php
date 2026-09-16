@@ -72,7 +72,9 @@
                                 @if ($quote->status === 'accepted')
                                     <a href="{{ route('quotations.invoice', $quote) }}" target="_blank" class="ml-2 text-zenora hover:underline">Invoice</a>
                                 @endif
-                                @if (! $quote->isDraft())
+                                @if ($quote->isDraft())
+                                    <a href="{{ route('quotations.edit', $quote) }}" class="ml-2 text-zenora hover:underline" wire:navigate>Edit</a>
+                                @else
                                     <button type="button" wire:click="revise({{ $quote->id }})"
                                         wire:loading.attr="disabled" wire:target="revise({{ $quote->id }})"
                                         class="ml-2 inline-flex items-center gap-1 text-zenora hover:underline disabled:cursor-wait disabled:opacity-55">

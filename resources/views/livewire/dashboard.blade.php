@@ -42,7 +42,7 @@
                     @forelse ($recentQuotes as $quote)
                         <tr class="border-t border-stone-100 hover:bg-sand/40">
                             <td class="px-5 py-3 font-medium">
-                                <a href="{{ route('quotations.edit', $quote) }}" class="hover:text-zenora" wire:navigate>{{ $quote->number }}</a>
+                                <a href="{{ $quote->isDraft() ? route('quotations.edit', $quote) : route('quotations.create', ['revise' => $quote->id]) }}" class="hover:text-zenora" wire:navigate>{{ $quote->number }}</a>
                             </td>
                             <td class="px-5 py-3">{{ $quote->client?->name }}</td>
                             <td class="px-5 py-3">{{ $quote->quote_date->format('d M Y') }}</td>
