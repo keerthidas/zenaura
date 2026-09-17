@@ -64,6 +64,9 @@ class QuotationFlowTest extends TestCase
         $this->assertStringContainsString($settings->phone, $pdfHtml);
         $this->assertStringContainsString($settings->email, $pdfHtml);
         $this->assertStringContainsString($settings->address, $pdfHtml);
+        $this->assertStringContainsString('TAP-001', $pdfHtml);
+        $this->assertStringContainsString('CHROME BASIN MIXER, SINGLE LEVER', $pdfHtml);
+        $this->assertStringNotContainsString('Chrome basin mixer, single lever', $pdfHtml);
         $this->assertStringContainsString('Quotation', $pdfHtml);
         $this->assertStringNotContainsString('Salesperson', $pdfHtml);
         $this->assertStringNotContainsString('Sales admin', $pdfHtml);

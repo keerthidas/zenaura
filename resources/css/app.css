@@ -64,6 +64,16 @@
         @apply h-8 w-full border-0 bg-transparent px-1.5 text-xs text-ink outline-none placeholder:text-stone-400 focus:bg-sand/70;
     }
 
+    .sheet-description {
+        @apply h-auto min-h-8 w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent px-1.5 py-1.5 text-xs leading-snug text-ink outline-none placeholder:text-stone-400 focus:bg-sand/70;
+        field-sizing: content;
+        overflow-wrap: anywhere;
+    }
+
+    .sheet-input.sheet-description {
+        height: auto;
+    }
+
     .quote-table {
         @apply w-full min-w-[1180px] border-separate border-spacing-0 text-xs;
     }
@@ -106,4 +116,8 @@
 
 .toast-timer {
     animation: toast-shrink 4s linear forwards;
+}
+
+[x-cloak] {
+    display: none !important;
 }

@@ -10,11 +10,46 @@
     @livewireStyles
 </head>
 <body class="min-h-screen bg-paper text-ink">
-    <div class="flex min-h-screen">
-        <aside class="hidden w-64 shrink-0 flex-col bg-zenora-dark text-sand lg:sticky lg:top-0 lg:flex lg:h-screen lg:overflow-y-auto">
-            <div class="px-6 pb-4 pt-7">
-                <p class="font-display text-2xl font-semibold tracking-tight text-white">Zenora</p>
-                <p class="mt-1 text-xs uppercase tracking-[0.18em] text-teal-200/80">Bathroom quotations</p>
+    <div
+        class="flex min-h-screen"
+        x-data="{
+            collapsed: {{ request()->routeIs('quotations.create', 'quotations.edit') ? 'true' : 'false' }},
+            wasQuoteEditor: {{ request()->routeIs('quotations.create', 'quotations.edit') ? 'true' : 'false' }},
+            isQuoteEditor() {
+                const path = window.location.pathname.replace(/\/+$/, '');
+                return /\/quotations\/create$/.test(path) || /\/quotations\/[^/]+\/edit$/.test(path);
+            },
+            applyRoute() {
+                const onEditor = this.isQuoteEditor();
+                if (onEditor && ! this.wasQuoteEditor) {
+                    this.collapsed = true;
+                } else if (! onEditor) {
+                    this.collapsed = localStorage.getItem('zenaura.sidebarCollapsed') === '1';
+                }
+                this.wasQuoteEditor = onEditor;
+            },
+            toggle() {
+                this.collapsed = ! this.collapsed;
+                localStorage.setItem('zenaura.sidebarCollapsed', this.collapsed ? '1' : '0');
+            },
+        }"
+        x-init="applyRoute()"
+        x-on:livewire:navigated.window="applyRoute()"
+    >
+        <aside
+            class="hidden w-64 shrink-0 flex-col bg-zenora-dark text-sand lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto {{ request()->routeIs('quotations.create', 'quotations.edit') ? '' : 'lg:flex' }}"
+            :class="collapsed ? 'lg:!hidden' : 'lg:flex'"
+        >
+            <div class="flex items-start justify-between gap-2 px-6 pb-4 pt-7">
+                <div>
+                    <p class="font-display text-2xl font-semibold tracking-tight text-white">Zenora</p>
+                    <p class="mt-1 text-xs uppercase tracking-[0.18em] text-teal-200/80">Bathroom quotations</p>
+                </div>
+                <button type="button" class="mt-1 rounded-lg p-1.5 text-teal-100/80 hover:bg-white/10 hover:text-white" x-on:click="toggle" title="Collapse menu" aria-label="Collapse menu">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
             </div>
             <nav class="flex flex-1 flex-col gap-1 px-3">
                 @php
@@ -48,10 +83,25 @@
 
         <div class="flex min-w-0 flex-1 flex-col">
             <header class="flex items-center justify-between border-b border-stone-200 bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
-                <p class="font-display text-lg font-semibold">Zenora</p>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-sand" x-on:click="toggle" aria-label="Toggle menu">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                    </button>
+                    <p class="font-display text-lg font-semibold">Zenora</p>
+                </div>
                 <a href="{{ route('quotations.create') }}" class="btn btn-primary py-1.5 text-xs">New quote</a>
             </header>
-            <nav class="flex gap-2 overflow-x-auto border-b border-stone-200 bg-white px-3 py-2 text-sm lg:hidden">
+            <div class="hidden items-center border-b border-stone-200 bg-white px-3 py-2 lg:flex" x-show="collapsed" x-cloak>
+                <button type="button" class="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-sand" x-on:click="toggle" aria-label="Open menu">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                    Menu
+                </button>
+            </div>
+            <nav class="flex gap-2 overflow-x-auto border-b border-stone-200 bg-white px-3 py-2 text-sm lg:hidden" x-show="!collapsed" x-cloak>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('dashboard') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('dashboard') }}" wire:navigate>Home</a>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('quotations.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('quotations.index') }}" wire:navigate>Quotes</a>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('products.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('products.index') }}" wire:navigate>Products</a>

@@ -154,7 +154,7 @@
                         <th class="w-14">Image</th>
                         <th class="w-36">Heading</th>
                         <th class="w-36">Code</th>
-                        <th>Description</th>
+                        <th class="min-w-[18rem]">Description</th>
                         <th class="w-16">Unit</th>
                         <th class="w-20">Qty</th>
                         <th class="w-28">Unit price</th>
@@ -184,7 +184,7 @@
                                 <td colspan="4" class="px-3 py-2 text-right text-[10px] uppercase tracking-wide text-teal-100">Section heading</td>
                             </tr>
                         @endif
-                        <tr class="border-b border-stone-200 bg-white align-middle hover:bg-sand/40" wire:key="line-{{ $i }}">
+                        <tr class="border-b border-stone-200 bg-white align-top hover:bg-sand/40" wire:key="line-{{ $i }}">
                             <td class="px-2 py-1.5">
                                 <label class="relative flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded bg-sand" title="Upload image">
                                     @if (! empty($item['image']))
@@ -213,7 +213,8 @@
                                 </div>
                             </td>
                             <td class="px-1 py-1">
-                                <input wire:model.blur="lines.{{ $i }}.description" class="sheet-input" placeholder="Description">
+                                <textarea wire:model.blur="lines.{{ $i }}.description" rows="1" data-autosize
+                                    class="sheet-input sheet-description" placeholder="Description"></textarea>
                             </td>
                             <td class="px-1 py-1">
                                 <input wire:model.blur="lines.{{ $i }}.unit" class="sheet-input uppercase">

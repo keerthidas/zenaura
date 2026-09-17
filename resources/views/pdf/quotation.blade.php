@@ -151,8 +151,8 @@
                                     <img src="{{ $itemImage }}" class="thumb">
                                 @endif
                             </td>
-                            <td>{{ $item->code }}</td>
-                            <td>{{ $item->description }}</td>
+                            <td>{{ mb_strtoupper((string) $item->code) }}</td>
+                            <td>{{ mb_strtoupper((string) $item->description) }}</td>
                             <td>{{ strtoupper($item->unit) }}</td>
                             <td class="right">{{ rtrim(rtrim(number_format((float) $item->qty, 3, '.', ''), '0'), '.') }}</td>
                             <td class="right">{{ number_format((float) $item->selling_price, 2) }}</td>
