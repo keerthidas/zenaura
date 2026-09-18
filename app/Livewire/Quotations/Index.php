@@ -2,13 +2,16 @@
 
 namespace App\Livewire\Quotations;
 
-use App\Models\Quotation;
 use App\Models\ProformaInvoice;
+use App\Models\Quotation;
+use App\Models\ReceiptVoucher;
 use App\Services\InvoiceNumberService;
 use App\Services\ProformaNumberService;
 use App\Services\QuotationNumberService;
+use App\Services\ReceiptNumberService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -37,6 +40,14 @@ class Index extends Component
 
     public string $proformaDeliveryTerms = '';
 
+    public ?int $receiptProformaId = null;
+
+    public string $receiptDate = '';
+
+    public string $receiptPaymentMode = 'Bank Transfer';
+
+    public string $receiptReference = '';
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -63,7 +74,7 @@ class Index extends Component
 
     public function openProforma(int $id): void
     {
-        $quote = Quotation::with('proformas')->findOrFail($id);
+        $quote = Quotation::with('proformas.receipt')->findOrFail($id);
         $remaining = $quote->proformaRemainingPercent();
 
         $this->proformaQuoteId = $id;
@@ -78,8 +89,18 @@ class Index extends Component
 
     public function closeProforma(): void
     {
-        $this->reset(['proformaQuoteId', 'proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms']);
-        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms']);
+        $this->reset([
+            'proformaQuoteId',
+            'proformaPercent',
+            'proformaDescription',
+            'proformaPaymentTerms',
+            'proformaDeliveryTerms',
+            'receiptProformaId',
+            'receiptDate',
+            'receiptPaymentMode',
+            'receiptReference',
+        ]);
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
     }
 
     public function createProforma(ProformaNumberService $numbers)
@@ -122,6 +143,87 @@ class Index extends Component
         flash_app_toast($this, 'Proforma invoice '.$proforma->number.' generated.');
         $this->js('window.open('.json_encode(route('quotations.proforma', [$quote, $proforma])).', "_blank")');
         $this->openProforma($quote->id);
+    }
+
+    public function deleteProforma(int $id): void
+    {
+        if (! $this->proformaQuoteId) {
+            return;
+        }
+
+        $proforma = ProformaInvoice::query()
+            ->where('quotation_id', $this->proformaQuoteId)
+            ->findOrFail($id);
+
+        $number = $proforma->number;
+        $proforma->delete();
+        flash_app_toast($this, 'Proforma invoice '.$number.' deleted.');
+        $this->closeReceipt();
+        $this->openProforma($this->proformaQuoteId);
+    }
+
+    public function openReceipt(int $id): void
+    {
+        if (! $this->proformaQuoteId) {
+            return;
+        }
+
+        $proforma = ProformaInvoice::query()
+            ->with('receipt')
+            ->where('quotation_id', $this->proformaQuoteId)
+            ->findOrFail($id);
+
+        if ($proforma->receipt) {
+            $this->js('window.open('.json_encode(route('quotations.receipt', [$proforma->quotation_id, $proforma, $proforma->receipt])).', "_blank")');
+
+            return;
+        }
+
+        $this->receiptProformaId = $proforma->id;
+        $this->receiptDate = now()->toDateString();
+        $this->receiptPaymentMode = 'Bank Transfer';
+        $this->receiptReference = '';
+        $this->resetErrorBag(['receiptDate', 'receiptPaymentMode', 'receiptReference']);
+    }
+
+    public function closeReceipt(): void
+    {
+        $this->reset(['receiptProformaId', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
+        $this->resetErrorBag(['receiptDate', 'receiptPaymentMode', 'receiptReference']);
+    }
+
+    public function createReceipt(ReceiptNumberService $numbers)
+    {
+        if (! $this->proformaQuoteId || ! $this->receiptProformaId) {
+            return;
+        }
+
+        $proforma = ProformaInvoice::query()
+            ->with('receipt')
+            ->where('quotation_id', $this->proformaQuoteId)
+            ->findOrFail($this->receiptProformaId);
+
+        $this->validate([
+            'receiptDate' => ['required', 'date'],
+            'receiptPaymentMode' => ['required', 'string', Rule::in(ReceiptVoucher::PAYMENT_MODES)],
+            'receiptReference' => ['nullable', 'string', 'max:120'],
+        ], [], [
+            'receiptDate' => 'received date',
+            'receiptPaymentMode' => 'payment mode',
+            'receiptReference' => 'reference',
+        ]);
+
+        $receipt = $numbers->create(
+            $proforma,
+            $this->receiptDate,
+            $this->receiptPaymentMode,
+            trim($this->receiptReference) ?: null,
+        );
+
+        flash_app_toast($this, 'Receipt voucher '.$receipt->number.' generated.');
+        $this->js('window.open('.json_encode(route('quotations.receipt', [$this->proformaQuoteId, $proforma, $receipt])).', "_blank")');
+        $this->closeReceipt();
+        $this->openProforma($this->proformaQuoteId);
     }
 
     public function updateStatus(int $id, string $status, InvoiceNumberService $invoices): void
@@ -192,7 +294,7 @@ class Index extends Component
     public function render()
     {
         $quotations = Quotation::query()
-            ->with(['client', 'proformas'])
+            ->with(['client', 'proformas.receipt'])
             ->when($this->search, function ($q) {
                 $term = '%'.$this->search.'%';
                 $q->where(function ($inner) use ($term) {
@@ -209,7 +311,7 @@ class Index extends Component
         return view('livewire.quotations.index', [
             'quotations' => $quotations,
             'proformaQuote' => $this->proformaQuoteId
-                ? Quotation::with(['client', 'proformas'])->find($this->proformaQuoteId)
+                ? Quotation::with(['client', 'proformas.receipt'])->find($this->proformaQuoteId)
                 : null,
         ]);
     }

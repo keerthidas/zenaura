@@ -27,7 +27,7 @@
     </div>
 
     <div class="card relative overflow-hidden">
-        <div wire:loading.flex wire:target="setStatus,revise,duplicate,delete,updateStatus,openProforma,createProforma"
+        <div wire:loading.flex wire:target="setStatus,revise,duplicate,delete,updateStatus,openProforma,createProforma,deleteProforma,openReceipt,createReceipt"
             class="absolute inset-0 z-10 items-center justify-center bg-white/70">
             <x-spinner class="h-7 w-7 text-zenora" />
         </div>
@@ -136,14 +136,72 @@
                 </p>
 
                 @if ($proformaQuote->proformas->isNotEmpty())
-                    <div class="mt-3 space-y-1.5 rounded-xl bg-sand/70 px-3 py-2">
+                    <div class="mt-3 space-y-2 rounded-xl bg-sand/70 px-3 py-2">
                         @foreach ($proformaQuote->proformas as $proforma)
-                            <a href="{{ route('quotations.proforma', [$proformaQuote, $proforma]) }}" target="_blank" class="flex items-center justify-between text-sm text-zenora hover:underline">
-                                <span>{{ $proforma->number }}</span>
-                                <span>{{ $proforma->percentLabel() }} · {{ aed($proforma->grand_total) }}</span>
-                            </a>
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/70 py-2 last:border-b-0 last:pb-0 first:pt-0">
+                                <div class="text-sm">
+                                    <a href="{{ route('quotations.proforma', [$proformaQuote, $proforma]) }}" target="_blank" class="font-medium text-zenora hover:underline">{{ $proforma->number }}</a>
+                                    <span class="text-stone-500"> · {{ $proforma->percentLabel() }} · {{ aed($proforma->grand_total) }}</span>
+                                    @if ($proforma->receipt)
+                                        <div class="text-[11px] text-stone-500">{{ $proforma->receipt->number }}</div>
+                                    @endif
+                                </div>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <a href="{{ route('quotations.proforma', [$proformaQuote, $proforma]) }}" target="_blank" class="text-zenora hover:underline">PDF</a>
+                                    @if ($proforma->receipt)
+                                        <a href="{{ route('quotations.receipt', [$proformaQuote, $proforma, $proforma->receipt]) }}" target="_blank" class="text-zenora hover:underline">Receipt</a>
+                                    @else
+                                        <button type="button" wire:click="openReceipt({{ $proforma->id }})"
+                                            wire:loading.attr="disabled" wire:target="openReceipt({{ $proforma->id }})"
+                                            class="text-zenora hover:underline disabled:cursor-wait disabled:opacity-55">Receipt</button>
+                                    @endif
+                                    <button type="button" wire:click="deleteProforma({{ $proforma->id }})"
+                                        wire:confirm="Delete this proforma invoice? The remaining percent will be freed."
+                                        wire:loading.attr="disabled" wire:target="deleteProforma({{ $proforma->id }})"
+                                        class="text-red-600 hover:underline disabled:cursor-wait disabled:opacity-55">Delete</button>
+                                </div>
+                            </div>
                         @endforeach
                     </div>
+                @endif
+
+                @if ($receiptProformaId)
+                    @php $receiptProforma = $proformaQuote->proformas->firstWhere('id', $receiptProformaId); @endphp
+                    @if ($receiptProforma)
+                        <div class="mt-4 rounded-xl border border-stone-200 p-4">
+                            <h4 class="font-medium">Receipt voucher for {{ $receiptProforma->number }}</h4>
+                            <p class="mt-1 text-sm text-stone-500">Amount {{ aed($receiptProforma->grand_total) }}</p>
+                            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label class="label">Received date</label>
+                                    <input type="date" wire:model="receiptDate" class="field">
+                                    @error('receiptDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="label">Payment mode</label>
+                                    <select wire:model="receiptPaymentMode" class="field">
+                                        @foreach (\App\Models\ReceiptVoucher::PAYMENT_MODES as $mode)
+                                            <option value="{{ $mode }}">{{ $mode }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('receiptPaymentMode') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="label">Reference (optional)</label>
+                                    <input wire:model="receiptReference" class="field" placeholder="Cheque no. / transfer ref.">
+                                    @error('receiptReference') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                            <div class="mt-4 flex gap-2">
+                                <button type="button" wire:click="createReceipt" wire:loading.attr="disabled" wire:target="createReceipt" class="btn btn-primary">
+                                    <x-spinner class="h-4 w-4" wire:loading wire:target="createReceipt" />
+                                    <span wire:loading.remove wire:target="createReceipt">Generate receipt</span>
+                                    <span wire:loading wire:target="createReceipt">Generating…</span>
+                                </button>
+                                <button type="button" wire:click="closeReceipt" class="btn btn-ghost">Cancel</button>
+                            </div>
+                        </div>
+                    @endif
                 @endif
 
                 @if ($proformaQuote->proformaRemainingPercent() > 0)

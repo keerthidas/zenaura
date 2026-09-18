@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ProformaInvoice extends Model
 {
@@ -43,6 +44,11 @@ class ProformaInvoice extends Model
     public function quotation(): BelongsTo
     {
         return $this->belongsTo(Quotation::class);
+    }
+
+    public function receipt(): HasOne
+    {
+        return $this->hasOne(ReceiptVoucher::class);
     }
 
     public function creator(): BelongsTo

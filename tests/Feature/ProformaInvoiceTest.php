@@ -119,6 +119,69 @@ class ProformaInvoiceTest extends TestCase
         $this->assertEquals(274.05, (float) $quote->proformas()->first()->grand_total);
     }
 
+    public function test_staff_can_create_a_receipt_voucher_and_delete_a_proforma(): void
+    {
+        $quote = $this->makeQuotation();
+        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
+
+        Livewire::actingAs($user)
+            ->test(Index::class)
+            ->call('openProforma', $quote->id)
+            ->set('proformaPercent', '50')
+            ->call('createProforma')
+            ->assertHasNoErrors();
+
+        $proforma = ProformaInvoice::firstOrFail();
+
+        Livewire::actingAs($user)
+            ->test(Index::class)
+            ->call('openProforma', $quote->id)
+            ->call('openReceipt', $proforma->id)
+            ->assertSet('receiptProformaId', $proforma->id)
+            ->assertSee('Receipt voucher')
+            ->set('receiptPaymentMode', 'Cash')
+            ->set('receiptReference', 'CASH-01')
+            ->call('createReceipt')
+            ->assertHasNoErrors();
+
+        $receipt = $proforma->fresh()->receipt;
+        $this->assertNotNull($receipt);
+        $this->assertStringStartsWith('ZS/RV/'.now()->format('my').'/', $receipt->number);
+        $this->assertSame('Cash', $receipt->payment_mode);
+        $this->assertEquals(137.03, (float) $receipt->amount);
+
+        $this->actingAs($user)
+            ->get(route('quotations.receipt', [$quote, $proforma, $receipt]))
+            ->assertOk();
+
+        $html = view('pdf.receipt', [
+            'quotation' => $quote->fresh()->load('client'),
+            'proforma' => $proforma->fresh(),
+            'receipt' => $receipt,
+            'settings' => CompanySetting::current(),
+            'logoDataUri' => null,
+            'signatureDataUri' => null,
+            'stampDataUri' => null,
+        ])->render();
+
+        $this->assertStringContainsString('Receipt Voucher', $html);
+        $this->assertStringContainsString($receipt->number, $html);
+        $this->assertStringContainsString($proforma->number, $html);
+        $this->assertStringContainsString('Cash', $html);
+        $this->assertStringContainsString("Co's Stamp", $html);
+        $this->assertStringContainsString('Please send all remittances', $html);
+
+        Livewire::actingAs($user)
+            ->test(Index::class)
+            ->call('openProforma', $quote->id)
+            ->call('deleteProforma', $proforma->id)
+            ->assertHasNoErrors();
+
+        $this->assertSame(0, ProformaInvoice::count());
+        $this->assertSame(0, \App\Models\ReceiptVoucher::count());
+        $this->assertSame(100.0, $quote->fresh()->load('proformas')->proformaRemainingPercent());
+    }
+
     private function makeQuotation(): Quotation
     {
         $this->seed();
