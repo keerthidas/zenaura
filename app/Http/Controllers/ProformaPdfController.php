@@ -17,12 +17,16 @@ class ProformaPdfController extends Controller
         $quotation->load(['client', 'proformas']);
         $settings = CompanySetting::current();
         $logoDataUri = pdf_brand_data_uri($settings->logo_path, 'images/logo.png');
+        $signatureDataUri = pdf_brand_data_uri($settings->signature_path, 'images/signature.png');
+        $stampDataUri = pdf_brand_data_uri($settings->stamp_path, 'images/costamp.png');
 
         $pdf = Pdf::loadView('pdf.proforma', [
             'quotation' => $quotation,
             'proforma' => $proforma,
             'settings' => $settings,
             'logoDataUri' => $logoDataUri,
+            'signatureDataUri' => $signatureDataUri,
+            'stampDataUri' => $stampDataUri,
         ])->setPaper('a4', 'portrait');
 
         $filename = str_replace(['/', '\\'], '-', $proforma->number).'.pdf';

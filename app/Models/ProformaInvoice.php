@@ -18,6 +18,8 @@ class ProformaInvoice extends Model
         'sequence_number',
         'percent',
         'description',
+        'payment_terms',
+        'delivery_terms',
         'subtotal',
         'vat_total',
         'grand_total',

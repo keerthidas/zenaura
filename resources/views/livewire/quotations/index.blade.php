@@ -121,7 +121,7 @@
 
     @if ($proformaQuote)
         <div class="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-4">
-            <div class="card w-full max-w-lg p-6">
+            <div class="card w-full max-w-xl p-6">
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <h3 class="font-display text-xl">Proforma invoice</h3>
@@ -152,6 +152,18 @@
                             <label class="label">Percent to invoice</label>
                             <input type="text" inputmode="decimal" wire:model="proformaPercent" class="field" placeholder="50">
                             @error('proformaPercent') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label class="label">Payment terms</label>
+                                <input wire:model="proformaPaymentTerms" class="field">
+                                @error('proformaPaymentTerms') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="label">Delivery terms</label>
+                                <input wire:model="proformaDeliveryTerms" class="field">
+                                @error('proformaDeliveryTerms') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
                         </div>
                         <div>
                             <label class="label">Description</label>

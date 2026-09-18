@@ -75,8 +75,13 @@ class ProformaNumberService
         ];
     }
 
-    public function create(Quotation $quotation, float $percent, string $description): ProformaInvoice
-    {
+    public function create(
+        Quotation $quotation,
+        float $percent,
+        string $description,
+        string $paymentTerms,
+        string $deliveryTerms,
+    ): ProformaInvoice {
         $remaining = $quotation->proformaRemainingPercent();
 
         if ($percent <= 0 || $percent > $remaining) {
@@ -90,6 +95,8 @@ class ProformaNumberService
             'quotation_id' => $quotation->id,
             'percent' => $percent,
             'description' => $description,
+            'payment_terms' => $paymentTerms,
+            'delivery_terms' => $deliveryTerms,
             'created_by' => Auth::id(),
         ]));
     }

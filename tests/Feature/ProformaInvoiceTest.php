@@ -28,8 +28,12 @@ class ProformaInvoiceTest extends TestCase
             ->call('openProforma', $quote->id)
             ->assertSet('proformaQuoteId', $quote->id)
             ->assertSet('proformaDescription', ProformaInvoice::DEFAULT_DESCRIPTION)
+            ->assertSet('proformaPaymentTerms', 'CASH IN ADVANCE')
+            ->assertSet('proformaDeliveryTerms', 'EX STOCK')
             ->assertSee('Proforma invoice')
             ->set('proformaPercent', '50')
+            ->set('proformaPaymentTerms', '50% Advance, 50% Before Delivery')
+            ->set('proformaDeliveryTerms', 'Within 2 days from Payment')
             ->call('createProforma')
             ->assertHasNoErrors();
 
@@ -37,6 +41,8 @@ class ProformaInvoiceTest extends TestCase
         $this->assertNotNull($first);
         $this->assertSame(50.0, (float) $first->percent);
         $this->assertStringStartsWith('ZS/PI/'.now()->format('my').'/', $first->number);
+        $this->assertSame('50% Advance, 50% Before Delivery', $first->payment_terms);
+        $this->assertSame('Within 2 days from Payment', $first->delivery_terms);
         $this->assertEquals(130.50, (float) $first->subtotal);
         $this->assertEquals(137.03, (float) $first->grand_total);
         $this->assertSame(50.0, $quote->fresh()->load('proformas')->proformaRemainingPercent());
@@ -79,13 +85,19 @@ class ProformaInvoiceTest extends TestCase
             'proforma' => $first,
             'settings' => CompanySetting::current(),
             'logoDataUri' => null,
+            'signatureDataUri' => null,
+            'stampDataUri' => null,
         ])->render();
 
-        $this->assertStringContainsString('PROFORMA INVOICE', $html);
+        $this->assertStringContainsString('Proforma Invoice', $html);
         $this->assertStringContainsString($first->number, $html);
         $this->assertStringContainsString(ProformaInvoice::DEFAULT_DESCRIPTION, $html);
         $this->assertStringContainsString('As per attached details and quantities in QTN '.$quote->number, $html);
+        $this->assertStringContainsString('50% Advance, 50% Before Delivery', $html);
+        $this->assertStringContainsString('Within 2 days from Payment', $html);
         $this->assertStringContainsString('50% Advance to be Paid', $html);
+        $this->assertStringContainsString("Co's Stamp", $html);
+        $this->assertStringContainsString('Please send all remittances', $html);
         $this->assertStringContainsString('137.03', $html);
     }
 

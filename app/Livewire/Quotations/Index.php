@@ -33,6 +33,10 @@ class Index extends Component
 
     public string $proformaDescription = '';
 
+    public string $proformaPaymentTerms = '';
+
+    public string $proformaDeliveryTerms = '';
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -67,13 +71,15 @@ class Index extends Component
             ? (string) min(50, $remaining)
             : '';
         $this->proformaDescription = ProformaInvoice::DEFAULT_DESCRIPTION;
-        $this->resetErrorBag(['proformaPercent', 'proformaDescription']);
+        $this->proformaPaymentTerms = (string) ($quote->payment_terms ?: 'CASH IN ADVANCE');
+        $this->proformaDeliveryTerms = (string) ($quote->delivery_availability ?: $quote->delivery ?: 'TO BE CONFIRMED');
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms']);
     }
 
     public function closeProforma(): void
     {
-        $this->reset(['proformaQuoteId', 'proformaPercent', 'proformaDescription']);
-        $this->resetErrorBag(['proformaPercent', 'proformaDescription']);
+        $this->reset(['proformaQuoteId', 'proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms']);
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms']);
     }
 
     public function createProforma(ProformaNumberService $numbers)
@@ -87,9 +93,13 @@ class Index extends Component
         $this->validate([
             'proformaPercent' => ['required', 'numeric', 'min:0.01', 'max:100'],
             'proformaDescription' => ['required', 'string', 'max:2000'],
+            'proformaPaymentTerms' => ['required', 'string', 'max:150'],
+            'proformaDeliveryTerms' => ['required', 'string', 'max:150'],
         ], [], [
             'proformaPercent' => 'percent',
             'proformaDescription' => 'description',
+            'proformaPaymentTerms' => 'payment terms',
+            'proformaDeliveryTerms' => 'delivery terms',
         ]);
 
         $percent = round((float) $this->proformaPercent, 2);
@@ -101,7 +111,13 @@ class Index extends Component
             return;
         }
 
-        $proforma = $numbers->create($quote, $percent, trim($this->proformaDescription));
+        $proforma = $numbers->create(
+            $quote,
+            $percent,
+            trim($this->proformaDescription),
+            trim($this->proformaPaymentTerms),
+            trim($this->proformaDeliveryTerms),
+        );
 
         flash_app_toast($this, 'Proforma invoice '.$proforma->number.' generated.');
         $this->js('window.open('.json_encode(route('quotations.proforma', [$quote, $proforma])).', "_blank")');
