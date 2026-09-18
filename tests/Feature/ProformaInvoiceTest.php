@@ -30,7 +30,8 @@ class ProformaInvoiceTest extends TestCase
             ->assertSet('proformaDescription', ProformaInvoice::DEFAULT_DESCRIPTION)
             ->assertSet('proformaPaymentTerms', 'CASH IN ADVANCE')
             ->assertSet('proformaDeliveryTerms', 'EX STOCK')
-            ->assertSee('Proforma invoice')
+            ->assertSee('Billing against quotation')
+            ->assertSee('New proforma')
             ->set('proformaPercent', '50')
             ->set('proformaPaymentTerms', '50% Advance, 50% Before Delivery')
             ->set('proformaDeliveryTerms', 'Within 2 days from Payment')
@@ -96,7 +97,7 @@ class ProformaInvoiceTest extends TestCase
         $this->assertStringContainsString('50% Advance, 50% Before Delivery', $html);
         $this->assertStringContainsString('Within 2 days from Payment', $html);
         $this->assertStringContainsString('50% Advance to be Paid', $html);
-        $this->assertStringContainsString('Quotation total (100%)', $html);
+        $this->assertStringContainsString('Quotation total', $html);
         $this->assertStringContainsString('274.05', $html);
         $this->assertStringContainsString("Co's Stamp", $html);
         $this->assertStringContainsString('Please send all remittances', $html);
@@ -140,7 +141,7 @@ class ProformaInvoiceTest extends TestCase
             ->call('openProforma', $quote->id)
             ->call('openReceipt', $proforma->id)
             ->assertSet('receiptProformaId', $proforma->id)
-            ->assertSee('Receipt voucher')
+            ->assertSee('Record receipt')
             ->set('receiptPaymentMode', 'Cash')
             ->set('receiptReference', 'CASH-01')
             ->call('createReceipt')

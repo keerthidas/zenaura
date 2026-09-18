@@ -48,6 +48,8 @@ class Index extends Component
 
     public string $receiptReference = '';
 
+    public bool $showProformaForm = false;
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -84,7 +86,9 @@ class Index extends Component
         $this->proformaDescription = ProformaInvoice::DEFAULT_DESCRIPTION;
         $this->proformaPaymentTerms = (string) ($quote->payment_terms ?: 'CASH IN ADVANCE');
         $this->proformaDeliveryTerms = (string) ($quote->delivery_availability ?: $quote->delivery ?: 'TO BE CONFIRMED');
-        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms']);
+        $this->showProformaForm = $quote->proformas->isEmpty() && $remaining > 0;
+        $this->reset(['receiptProformaId', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
     }
 
     public function closeProforma(): void
@@ -99,6 +103,7 @@ class Index extends Component
             'receiptDate',
             'receiptPaymentMode',
             'receiptReference',
+            'showProformaForm',
         ]);
         $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
     }
@@ -142,7 +147,27 @@ class Index extends Component
 
         flash_app_toast($this, 'Proforma invoice '.$proforma->number.' generated.');
         $this->js('window.open('.json_encode(route('quotations.proforma', [$quote, $proforma])).', "_blank")');
+        $this->showProformaForm = false;
         $this->openProforma($quote->id);
+    }
+
+    public function startNewProforma(): void
+    {
+        if (! $this->proformaQuoteId) {
+            return;
+        }
+
+        $this->closeReceipt();
+        $quote = Quotation::with('proformas')->findOrFail($this->proformaQuoteId);
+        $remaining = $quote->proformaRemainingPercent();
+        $this->proformaPercent = $remaining > 0 ? (string) min(50, $remaining) : '';
+        $this->showProformaForm = true;
+    }
+
+    public function cancelNewProforma(): void
+    {
+        $this->showProformaForm = false;
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms']);
     }
 
     public function deleteProforma(int $id): void
@@ -183,6 +208,7 @@ class Index extends Component
         $this->receiptDate = now()->toDateString();
         $this->receiptPaymentMode = 'Bank Transfer';
         $this->receiptReference = '';
+        $this->showProformaForm = false;
         $this->resetErrorBag(['receiptDate', 'receiptPaymentMode', 'receiptReference']);
     }
 
