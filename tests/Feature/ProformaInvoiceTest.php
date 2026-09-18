@@ -96,6 +96,8 @@ class ProformaInvoiceTest extends TestCase
         $this->assertStringContainsString('50% Advance, 50% Before Delivery', $html);
         $this->assertStringContainsString('Within 2 days from Payment', $html);
         $this->assertStringContainsString('50% Advance to be Paid', $html);
+        $this->assertStringContainsString('Quotation total (100%)', $html);
+        $this->assertStringContainsString('274.05', $html);
         $this->assertStringContainsString("Co's Stamp", $html);
         $this->assertStringContainsString('Please send all remittances', $html);
         $this->assertStringContainsString('137.03', $html);

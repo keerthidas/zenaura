@@ -40,7 +40,8 @@
         .split { margin-top: 14px; page-break-inside: avoid; }
         .split td { border: 0.8px solid #000; padding: 0; vertical-align: top; }
         .split .cap { background: #e6e6e6; padding: 5px 8px; font-weight: bold; border-bottom: 0.8px solid #000; }
-        .split .amt { padding: 10px 8px; font-size: 13px; font-weight: bold; }
+        .split .amt { padding: 8px 8px 4px; font-size: 13px; font-weight: bold; }
+        .split .hint { padding: 0 8px 8px; font-size: 9px; color: #444; }
         .signs { margin-top: 36px; page-break-inside: avoid; }
         .signs td { vertical-align: bottom; padding: 0; }
         .sign-box { width: 220px; margin: 0 auto; }
@@ -216,11 +217,15 @@
 
     <table class="split">
         <tr>
-            <td width="50%">
+            <td width="34%">
+                <div class="cap">Quotation total</div>
+                <div class="amt">{{ $currency }} {{ number_format($quoteGrand, 2) }}</div>
+            </td>
+            <td width="33%">
                 <div class="cap">{{ $percentLabel }} Advance to be Paid</div>
                 <div class="amt">{{ $currency }} {{ number_format($grand, 2) }}</div>
             </td>
-            <td width="50%">
+            <td width="33%">
                 <div class="cap">{{ $remaining > 0 ? $remainingLabel.' Balance to be Paid' : 'Balance Paid' }}</div>
                 <div class="amt">{{ $currency }} {{ number_format($balanceAmount, 2) }}</div>
             </td>
