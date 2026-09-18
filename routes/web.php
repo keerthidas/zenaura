@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\ProformaPdfController;
 use App\Http\Controllers\QuotationPdfController;
 use App\Livewire\Auth\Login;
 use App\Livewire\Clients\ClientForm;
@@ -53,6 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/quotations/{quotation}/edit', QuotationEditor::class)->name('quotations.edit');
     Route::get('/quotations/{quotation}/pdf', QuotationPdfController::class)->name('quotations.pdf');
     Route::get('/quotations/{quotation}/invoice', InvoicePdfController::class)->name('quotations.invoice');
+    Route::get('/quotations/{quotation}/proformas/{proforma}', ProformaPdfController::class)->name('quotations.proforma');
 
     Route::get('/settings', CompanyForm::class)->name('settings.company');
 });

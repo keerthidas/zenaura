@@ -3,7 +3,9 @@
 namespace App\Livewire\Quotations;
 
 use App\Models\Quotation;
+use App\Models\ProformaInvoice;
 use App\Services\InvoiceNumberService;
+use App\Services\ProformaNumberService;
 use App\Services\QuotationNumberService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,12 @@ class Index extends Component
 
     #[Url]
     public string $status = '';
+
+    public ?int $proformaQuoteId = null;
+
+    public string $proformaPercent = '50';
+
+    public string $proformaDescription = '';
 
     public function updatingSearch(): void
     {
@@ -47,6 +55,57 @@ class Index extends Component
         }
 
         $this->redirect(route('quotations.create', ['revise' => $id]), navigate: true);
+    }
+
+    public function openProforma(int $id): void
+    {
+        $quote = Quotation::with('proformas')->findOrFail($id);
+        $remaining = $quote->proformaRemainingPercent();
+
+        $this->proformaQuoteId = $id;
+        $this->proformaPercent = $remaining > 0
+            ? (string) min(50, $remaining)
+            : '';
+        $this->proformaDescription = ProformaInvoice::DEFAULT_DESCRIPTION;
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription']);
+    }
+
+    public function closeProforma(): void
+    {
+        $this->reset(['proformaQuoteId', 'proformaPercent', 'proformaDescription']);
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription']);
+    }
+
+    public function createProforma(ProformaNumberService $numbers)
+    {
+        if (! $this->proformaQuoteId) {
+            return;
+        }
+
+        $quote = Quotation::with('proformas')->findOrFail($this->proformaQuoteId);
+
+        $this->validate([
+            'proformaPercent' => ['required', 'numeric', 'min:0.01', 'max:100'],
+            'proformaDescription' => ['required', 'string', 'max:2000'],
+        ], [], [
+            'proformaPercent' => 'percent',
+            'proformaDescription' => 'description',
+        ]);
+
+        $percent = round((float) $this->proformaPercent, 2);
+        $remaining = $quote->proformaRemainingPercent();
+
+        if ($percent > $remaining) {
+            $this->addError('proformaPercent', 'Only '.$remaining.'% remains on this quotation.');
+
+            return;
+        }
+
+        $proforma = $numbers->create($quote, $percent, trim($this->proformaDescription));
+
+        flash_app_toast($this, 'Proforma invoice '.$proforma->number.' generated.');
+        $this->js('window.open('.json_encode(route('quotations.proforma', [$quote, $proforma])).', "_blank")');
+        $this->openProforma($quote->id);
     }
 
     public function updateStatus(int $id, string $status, InvoiceNumberService $invoices): void
@@ -117,7 +176,7 @@ class Index extends Component
     public function render()
     {
         $quotations = Quotation::query()
-            ->with('client')
+            ->with(['client', 'proformas'])
             ->when($this->search, function ($q) {
                 $term = '%'.$this->search.'%';
                 $q->where(function ($inner) use ($term) {
@@ -131,6 +190,11 @@ class Index extends Component
             ->latest('id')
             ->paginate(15);
 
-        return view('livewire.quotations.index', compact('quotations'));
+        return view('livewire.quotations.index', [
+            'quotations' => $quotations,
+            'proformaQuote' => $this->proformaQuoteId
+                ? Quotation::with(['client', 'proformas'])->find($this->proformaQuoteId)
+                : null,
+        ]);
     }
 }

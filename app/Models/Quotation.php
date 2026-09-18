@@ -77,6 +77,25 @@ class Quotation extends Model
         return $this->hasMany(QuotationItem::class)->orderBy('sort_order');
     }
 
+    public function proformas(): HasMany
+    {
+        return $this->hasMany(ProformaInvoice::class)->orderBy('id');
+    }
+
+    public function proformaPercentInvoiced(): float
+    {
+        if ($this->relationLoaded('proformas')) {
+            return round((float) $this->proformas->sum('percent'), 2);
+        }
+
+        return round((float) $this->proformas()->sum('percent'), 2);
+    }
+
+    public function proformaRemainingPercent(): float
+    {
+        return round(max(0, 100 - $this->proformaPercentInvoiced()), 2);
+    }
+
     public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_id');

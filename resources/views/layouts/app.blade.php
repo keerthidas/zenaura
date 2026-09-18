@@ -42,7 +42,7 @@
         >
             <div class="flex items-start justify-between gap-2 px-6 pb-4 pt-7">
                 <div>
-                    <p class="font-display text-2xl font-semibold tracking-tight text-white">Zenora</p>
+                    <p class="font-display text-2xl font-semibold tracking-tight text-white">Zenaura</p>
                     <p class="mt-1 text-xs uppercase tracking-[0.18em] text-teal-200/80">Bathroom quotations</p>
                 </div>
                 <button type="button" class="mt-1 rounded-lg p-1.5 text-teal-100/80 hover:bg-white/10 hover:text-white" x-on:click="toggle" title="Collapse menu" aria-label="Collapse menu">

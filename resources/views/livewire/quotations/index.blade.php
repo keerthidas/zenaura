@@ -27,7 +27,7 @@
     </div>
 
     <div class="card relative overflow-hidden">
-        <div wire:loading.flex wire:target="setStatus,revise,duplicate,delete,updateStatus"
+        <div wire:loading.flex wire:target="setStatus,revise,duplicate,delete,updateStatus,openProforma,createProforma"
             class="absolute inset-0 z-10 items-center justify-center bg-white/70">
             <x-spinner class="h-7 w-7 text-zenora" />
         </div>
@@ -54,6 +54,12 @@
                                 @if ($quote->invoice_number)
                                     <div class="mt-0.5 text-[11px] text-stone-500">{{ $quote->invoice_number }}</div>
                                 @endif
+                                @foreach ($quote->proformas as $proforma)
+                                    <div class="mt-0.5 text-[11px] text-stone-500">
+                                        <a href="{{ route('quotations.proforma', [$quote, $proforma]) }}" target="_blank" class="hover:text-zenora hover:underline">{{ $proforma->number }}</a>
+                                        <span>({{ $proforma->percentLabel() }})</span>
+                                    </div>
+                                @endforeach
                             </td>
                             <td class="px-4 py-3">{{ $quote->client?->name }}</td>
                             <td class="px-4 py-3">{{ $quote->quote_date->format('d M Y') }}</td>
@@ -69,6 +75,12 @@
                             <td class="px-4 py-3 text-right">{{ aed($quote->grand_total) }}</td>
                             <td class="px-4 py-3 text-right whitespace-nowrap">
                                 <a href="{{ route('quotations.pdf', $quote) }}" target="_blank" class="text-zenora hover:underline">PDF</a>
+                                <button type="button" wire:click="openProforma({{ $quote->id }})"
+                                    wire:loading.attr="disabled" wire:target="openProforma({{ $quote->id }})"
+                                    class="ml-2 inline-flex items-center gap-1 text-zenora hover:underline disabled:cursor-wait disabled:opacity-55">
+                                    <x-spinner class="h-3 w-3" wire:loading wire:target="openProforma({{ $quote->id }})" />
+                                    Proforma
+                                </button>
                                 @if ($quote->status === 'accepted')
                                     <a href="{{ route('quotations.invoice', $quote) }}" target="_blank" class="ml-2 text-zenora hover:underline">Invoice</a>
                                 @endif
@@ -106,4 +118,62 @@
         </div>
         <div class="border-t border-stone-100 px-4 py-3">{{ $quotations->links() }}</div>
     </div>
+
+    @if ($proformaQuote)
+        <div class="fixed inset-0 z-40 flex items-center justify-center bg-ink/40 p-4">
+            <div class="card w-full max-w-lg p-6">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <h3 class="font-display text-xl">Proforma invoice</h3>
+                        <p class="mt-1 text-sm text-stone-500">{{ $proformaQuote->number }} · {{ aed($proformaQuote->grand_total) }}</p>
+                    </div>
+                    <button type="button" wire:click="closeProforma" class="text-sm text-stone-500 hover:text-ink">Close</button>
+                </div>
+
+                <p class="mt-3 text-sm">
+                    Invoiced <span class="font-semibold">{{ rtrim(rtrim(number_format($proformaQuote->proformaPercentInvoiced(), 2, '.', ''), '0'), '.') }}%</span>
+                    · Remaining <span class="font-semibold">{{ rtrim(rtrim(number_format($proformaQuote->proformaRemainingPercent(), 2, '.', ''), '0'), '.') }}%</span>
+                </p>
+
+                @if ($proformaQuote->proformas->isNotEmpty())
+                    <div class="mt-3 space-y-1.5 rounded-xl bg-sand/70 px-3 py-2">
+                        @foreach ($proformaQuote->proformas as $proforma)
+                            <a href="{{ route('quotations.proforma', [$proformaQuote, $proforma]) }}" target="_blank" class="flex items-center justify-between text-sm text-zenora hover:underline">
+                                <span>{{ $proforma->number }}</span>
+                                <span>{{ $proforma->percentLabel() }} · {{ aed($proforma->grand_total) }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if ($proformaQuote->proformaRemainingPercent() > 0)
+                    <div class="mt-4 space-y-3">
+                        <div>
+                            <label class="label">Percent to invoice</label>
+                            <input type="text" inputmode="decimal" wire:model="proformaPercent" class="field" placeholder="50">
+                            @error('proformaPercent') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="label">Description</label>
+                            <textarea wire:model="proformaDescription" rows="4" class="field"></textarea>
+                            @error('proformaDescription') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div class="mt-5 flex gap-2">
+                        <button type="button" wire:click="createProforma" wire:loading.attr="disabled" wire:target="createProforma" class="btn btn-primary">
+                            <x-spinner class="h-4 w-4" wire:loading wire:target="createProforma" />
+                            <span wire:loading.remove wire:target="createProforma">Generate proforma</span>
+                            <span wire:loading wire:target="createProforma">Generating…</span>
+                        </button>
+                        <button type="button" wire:click="closeProforma" class="btn btn-ghost">Cancel</button>
+                    </div>
+                @else
+                    <p class="mt-4 text-sm text-stone-500">This quotation is fully covered (100%). Open an existing proforma above.</p>
+                    <div class="mt-5">
+                        <button type="button" wire:click="closeProforma" class="btn btn-ghost">Close</button>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
 </div>
