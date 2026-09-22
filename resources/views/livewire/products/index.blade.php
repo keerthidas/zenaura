@@ -21,7 +21,7 @@
                         <th class="px-4 py-3">Description</th>
                         <th class="px-4 py-3">Unit</th>
                         <th class="px-4 py-3 text-right">Actual</th>
-                        <th class="px-4 py-3 text-right">Selling</th>
+                        <th class="px-4 py-3 text-right">Selling excl. VAT</th>
                         <th class="px-4 py-3"></th>
                     </tr>
                 </thead>

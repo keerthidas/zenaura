@@ -30,7 +30,7 @@
                 @error('actual_price') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="label">Selling price (AED)</label>
+                <label class="label">Selling price (AED, excl. VAT)</label>
                 <input type="number" step="0.01" min="0" wire:model="selling_price" class="field">
                 @error('selling_price') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>

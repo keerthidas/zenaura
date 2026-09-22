@@ -2,7 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\CompanySetting;
 use App\Models\Product;
+use App\Services\QuotationCalculator;
+use App\Support\Mea2026Catalog;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,15 +19,15 @@ class Mea2026CatalogSeeder extends Seeder
 {
     public function run(): void
     {
-        $jsonPath = database_path('seeders/data/mea-2026/products.json');
+        $products = Mea2026Catalog::rows();
 
-        if (! is_file($jsonPath)) {
+        if ($products === []) {
             $this->command?->warn('MEA 2026 catalog JSON is missing. Skip Mea2026CatalogSeeder.');
 
             return;
         }
 
-        $products = json_decode((string) file_get_contents($jsonPath), true, 512, JSON_THROW_ON_ERROR);
+        $vat = (float) CompanySetting::current()->default_vat_percent;
         $baseDir = database_path('seeders/data/mea-2026');
         $created = 0;
         $updated = 0;
@@ -41,7 +44,10 @@ class Mea2026CatalogSeeder extends Seeder
                 [
                     'description' => $row['description'],
                     'actual_price' => $row['actual_price'] ?? 0,
-                    'selling_price' => $row['selling_price'] ?? 0,
+                    'selling_price' => QuotationCalculator::exclusiveFromInclusive(
+                        (float) ($row['selling_price'] ?? 0),
+                        $vat
+                    ),
                     'unit' => $row['unit'] ?? 'pcs',
                     'is_active' => true,
                     'deleted_at' => null,

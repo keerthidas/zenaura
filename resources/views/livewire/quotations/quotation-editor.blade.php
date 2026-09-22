@@ -157,7 +157,7 @@
                         <th class="min-w-[18rem]">Description</th>
                         <th class="w-16">Unit</th>
                         <th class="w-20">Qty</th>
-                        <th class="w-28">Unit price</th>
+                        <th class="w-28">Unit price excl. VAT</th>
                         <th class="w-20">Disc %</th>
                         <th class="w-24">Net</th>
                         <th class="w-24">VAT</th>

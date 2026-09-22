@@ -26,4 +26,12 @@ class QuotationCalculatorTest extends TestCase
         $this->assertSame('334.29', $line['vat_amount']);
         $this->assertSame('7020.03', $line['line_total']);
     }
+
+    public function test_it_converts_vat_inclusive_catalogue_prices_to_exclusive(): void
+    {
+        $this->assertSame(2110.48, QuotationCalculator::exclusiveFromInclusive(2215, 5));
+        $this->assertSame(2215.0, QuotationCalculator::exclusiveFromInclusive(2215, 0));
+        $this->assertTrue(QuotationCalculator::pricesMatch(2215, 2215.00));
+        $this->assertFalse(QuotationCalculator::pricesMatch(2215, 2110.48));
+    }
 }

@@ -23,6 +23,24 @@ class QuotationCalculator
     }
 
     /**
+     * Catalogue list prices include VAT. Quotations add VAT again, so store excl. VAT.
+     */
+    public static function exclusiveFromInclusive(float $inclusive, float $vatPercent = 5): float
+    {
+        $inclusive = round($inclusive, 2);
+        if ($inclusive <= 0 || $vatPercent <= 0) {
+            return $inclusive;
+        }
+
+        return round($inclusive / (1 + ($vatPercent / 100)), 2);
+    }
+
+    public static function pricesMatch(float $left, float $right): bool
+    {
+        return abs(round($left, 2) - round($right, 2)) < 0.005;
+    }
+
+    /**
      * @param  array<string, mixed>  $item
      * @return array<string, mixed>
      */
