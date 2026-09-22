@@ -249,6 +249,11 @@ class QuotationEditor extends Component
             return;
         }
 
+        $raw = trim((string) ($this->lines[$i][$m[2]] ?? ''));
+        if ($raw !== '' && preg_match('/[,\s]/', $raw)) {
+            $this->lines[$i][$m[2]] = str_replace([',', ' '], '', $raw);
+        }
+
         $this->lines[$i] = QuotationCalculator::line($this->lines[$i]);
     }
 
@@ -498,10 +503,10 @@ class QuotationEditor extends Component
                     'code' => strtoupper(trim($line['code'])),
                     'description' => $line['description'],
                     'unit' => $line['unit'] ?: 'EACH',
-                    'qty' => ($line['qty'] === '' || $line['qty'] === null) ? 1 : $line['qty'],
-                    'selling_price' => $line['selling_price'],
-                    'discount_percent' => $line['discount_percent'] ?: 0,
-                    'vat_percent' => $line['vat_percent'] ?: 0,
+                    'qty' => ($line['qty'] === '' || $line['qty'] === null) ? 1 : QuotationCalculator::number($line['qty']),
+                    'selling_price' => QuotationCalculator::number($line['selling_price'] ?? 0),
+                    'discount_percent' => QuotationCalculator::number($line['discount_percent'] ?? 0),
+                    'vat_percent' => QuotationCalculator::number($line['vat_percent'] ?? 0),
                     'amount' => $line['amount'],
                     'vat_amount' => $line['vat_amount'],
                     'line_total' => $line['line_total'],
@@ -570,7 +575,7 @@ class QuotationEditor extends Component
             'code' => $code,
             'description' => $line['description'],
             'actual_price' => 0,
-            'selling_price' => $line['selling_price'] ?: 0,
+            'selling_price' => QuotationCalculator::number($line['selling_price'] ?? 0),
             'unit' => $line['unit'] ?: 'EACH',
             'is_active' => true,
         ]);
@@ -632,7 +637,7 @@ class QuotationEditor extends Component
                 continue;
             }
 
-            $line[$field] = rtrim(rtrim(number_format((float) $line[$field], 3, '.', ''), '0'), '.');
+            $line[$field] = rtrim(rtrim(number_format(QuotationCalculator::number($line[$field]), 3, '.', ''), '0'), '.');
         }
 
         return $line;

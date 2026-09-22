@@ -5,16 +5,34 @@ namespace App\Services;
 class QuotationCalculator
 {
     /**
+     * Accepts plain decimals and thousands-separated values such as "1,114.29".
+     */
+    public static function number(mixed $value): float
+    {
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        $raw = str_replace([',', ' '], '', trim((string) $value));
+
+        if ($raw === '' || ! is_numeric($raw)) {
+            return 0.0;
+        }
+
+        return (float) $raw;
+    }
+
+    /**
      * @param  array<string, mixed>  $item
      * @return array<string, mixed>
      */
     public static function line(array $item): array
     {
         $qtyRaw = $item['qty'] ?? '';
-        $qty = ($qtyRaw === '' || $qtyRaw === null) ? 1.0 : (float) $qtyRaw;
-        $price = (float) ($item['selling_price'] ?? 0);
-        $discount = (float) ($item['discount_percent'] ?? 0);
-        $vat = (float) ($item['vat_percent'] ?? 0);
+        $qty = ($qtyRaw === '' || $qtyRaw === null) ? 1.0 : self::number($qtyRaw);
+        $price = self::number($item['selling_price'] ?? 0);
+        $discount = self::number($item['discount_percent'] ?? 0);
+        $vat = self::number($item['vat_percent'] ?? 0);
 
         $amount = round($qty * $price, 2);
         $discountValue = round($amount * ($discount / 100), 2);

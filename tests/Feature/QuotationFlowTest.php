@@ -141,6 +141,31 @@ class QuotationFlowTest extends TestCase
         $this->assertSame($product->id, Quotation::first()->items()->first()->product_id);
     }
 
+    public function test_thousands_separators_in_selling_price_are_stored_as_decimals(): void
+    {
+        $this->seed();
+        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
+        $client = Client::firstOrFail();
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('client_id', $client->id)
+            ->set('client_query', $client->name)
+            ->set('lines.0.code', 'BDS-K133-A02-ESG5')
+            ->set('lines.0.description', 'Concealed cistern')
+            ->set('lines.0.qty', '6')
+            ->set('lines.0.selling_price', '1,114.29')
+            ->set('lines.0.unit', 'PCS')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $item = Quotation::first()->items()->first();
+        $this->assertEquals(1114.29, (float) $item->selling_price);
+        $this->assertEquals(6685.74, (float) $item->amount);
+        $this->assertEquals(334.29, (float) $item->vat_amount);
+        $this->assertEquals(7020.03, (float) $item->line_total);
+    }
+
     public function test_revise_does_not_create_a_record_until_saved(): void
     {
         $this->seed();
