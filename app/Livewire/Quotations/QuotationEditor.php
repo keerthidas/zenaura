@@ -568,6 +568,11 @@ class QuotationEditor extends Component
                 $product->restore();
             }
 
+            $description = trim((string) ($line['description'] ?? ''));
+            if ($description !== '' && $product->description !== $description) {
+                $product->update(['description' => $description]);
+            }
+
             return $product;
         }
 

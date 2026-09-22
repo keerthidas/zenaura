@@ -141,6 +141,29 @@ class QuotationFlowTest extends TestCase
         $this->assertSame($product->id, Quotation::first()->items()->first()->product_id);
     }
 
+    public function test_editing_a_line_description_updates_the_catalogue_product(): void
+    {
+        $this->seed();
+        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
+        $client = Client::firstOrFail();
+        $product = Product::where('code', 'TAP-001')->firstOrFail();
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('client_id', $client->id)
+            ->set('client_query', $client->name)
+            ->call('pickProduct', 0, $product->id)
+            ->set('lines.0.description', 'Updated basin mixer description')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $product->refresh();
+        $item = Quotation::first()->items()->first();
+
+        $this->assertSame('Updated basin mixer description', $product->description);
+        $this->assertSame('Updated basin mixer description', $item->description);
+    }
+
     public function test_thousands_separators_in_selling_price_are_stored_as_decimals(): void
     {
         $this->seed();
