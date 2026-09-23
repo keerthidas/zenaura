@@ -68,6 +68,9 @@ class QuotationFlowTest extends TestCase
         $this->assertStringContainsString('CHROME BASIN MIXER, SINGLE LEVER', $pdfHtml);
         $this->assertStringNotContainsString('Chrome basin mixer, single lever', $pdfHtml);
         $this->assertStringContainsString('Quotation', $pdfHtml);
+        $this->assertStringContainsString('margin: 88px 36px 62px 36px', $pdfHtml);
+        $this->assertStringContainsString('@page :first { margin-top: 76px; }', $pdfHtml);
+        $this->assertStringContainsString('table-header-group', $pdfHtml);
         $this->assertStringNotContainsString('Salesperson', $pdfHtml);
         $this->assertStringNotContainsString('Sales admin', $pdfHtml);
     }

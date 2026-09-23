@@ -4,16 +4,18 @@
     <meta charset="utf-8">
     <title>{{ $quotation->number }}</title>
     <style>
-        @page { margin: 80px 36px 62px 36px; }
+        @page { margin: 88px 36px 62px 36px; }
+        @page :first { margin-top: 76px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
         .muted { color: #555; }
         .right { text-align: right; }
         table, th, td { font-size: 10px; }
         table { width: 100%; border-collapse: collapse; }
-        .pdf-header { position: fixed; top: -70px; left: 0; right: 0; }
+        .pdf-header { position: fixed; top: -68px; left: 0; right: 0; height: 62px; overflow: hidden; }
+        .pdf-header table { table-layout: fixed; }
         .pdf-header td { vertical-align: top; }
-        .logo { max-height: 56px; max-width: 220px; }
-        .co-contact { font-size: 10px; line-height: 1.5; color: #222; text-align: right; }
+        .logo { max-height: 52px; max-width: 200px; }
+        .co-contact { font-size: 9px; line-height: 1.3; color: #222; text-align: right; }
         .doc-title { font-size: 22px; font-weight: bold; text-align: center; margin: 0 0 12px; color: #111; }
         .doc-sub { text-align: center; font-size: 10px; color: #444; margin-top: 2px; }
         .pdf-footer { position: fixed; bottom: -50px; left: 0; right: 0; height: 40px; border-top: 0.8px solid #bbb; padding-top: 6px; font-size: 10px; color: #444; }
@@ -24,8 +26,11 @@
         .box { border: 1px solid #d5d5d5; padding: 8px 10px; font-size: 10px; line-height: 1.4; }
         .box-title { background: #0e3d44; color: #fff; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 8px; }
         .kv td { padding: 3px 0; font-size: 10px; }
+        .items { page-break-inside: auto; }
+        .items thead { display: table-header-group; }
+        .items tbody tr { page-break-inside: avoid; }
         .items th { background: #0e3d44; color: #fff; font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 5px 3px 6px; }
-        .items td { padding: 4px 3px; border-bottom: 0.5px solid #ddd; vertical-align: middle; font-size: 10px; }
+        .items td { padding: 4px 3px; border-bottom: 0.5px solid #ddd; vertical-align: top; font-size: 10px; }
         .heading td { background: #4a4a4a; color: #fff; font-weight: bold; font-size: 10px; padding: 6px 4px; }
         .subhead td { background: #d9d9d9; font-weight: bold; font-size: 10px; }
         .thumb { width: 32px; height: 32px; object-fit: cover; }
