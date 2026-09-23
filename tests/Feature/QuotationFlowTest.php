@@ -75,6 +75,30 @@ class QuotationFlowTest extends TestCase
         $this->assertStringNotContainsString('Sales admin', $pdfHtml);
     }
 
+    public function test_bulk_discount_fills_every_line_and_leaves_rows_editable(): void
+    {
+        $this->seed();
+        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
+        $client = Client::firstOrFail();
+        $first = Product::where('code', 'TAP-001')->firstOrFail();
+        $second = Product::where('code', 'TAP-014')->firstOrFail();
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('client_id', $client->id)
+            ->call('pickProduct', 0, $first->id)
+            ->call('addLine')
+            ->call('pickProduct', 1, $second->id)
+            ->set('bulk_discount', '10')
+            ->call('applyDiscountToAll')
+            ->assertHasNoErrors()
+            ->assertSet('lines.0.discount_percent', '10')
+            ->assertSet('lines.1.discount_percent', '10')
+            ->set('lines.1.discount_percent', '5')
+            ->assertSet('lines.0.discount_percent', '10')
+            ->assertSet('lines.1.discount_percent', '5');
+    }
+
     public function test_heading_is_optional_when_saving(): void
     {
         $this->seed();
@@ -382,6 +406,9 @@ class QuotationFlowTest extends TestCase
         $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
         $client = Client::firstOrFail();
         $product = Product::where('code', 'TAP-001')->firstOrFail();
+        $oldPath = 'products/'.$product->id.'/old.png';
+        Storage::disk('public')->put($oldPath, 'old-image');
+        $product->images()->create(['path' => $oldPath, 'sort_order' => 1]);
         $file = UploadedFile::fake()->image('tap.jpg', 80, 80);
 
         Livewire::actingAs($user)
@@ -395,5 +422,25 @@ class QuotationFlowTest extends TestCase
         $item = Quotation::first()->items()->first();
         $this->assertNotNull($item->image_path);
         Storage::disk('public')->assertExists($item->image_path);
+
+        $catalogue = $product->fresh()->images()->first();
+        $this->assertNotNull($catalogue);
+        $this->assertNotSame($oldPath, $catalogue->path);
+        Storage::disk('public')->assertExists($catalogue->path);
+        Storage::disk('public')->assertMissing($oldPath);
+
+        $replacement = UploadedFile::fake()->image('tap-new.jpg', 80, 80);
+        $quote = Quotation::first();
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class, ['quotation' => $quote])
+            ->set('linePhotos.0', $replacement)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $updated = $product->fresh()->images()->first();
+        $this->assertNotSame($catalogue->path, $updated->path);
+        Storage::disk('public')->assertExists($updated->path);
+        Storage::disk('public')->assertMissing($catalogue->path);
     }
 }

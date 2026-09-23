@@ -138,12 +138,25 @@
         </div>
     </div>
 
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <div class="mb-3 flex flex-wrap items-end justify-between gap-3">
         <h2 class="font-medium">Line items</h2>
-        <button type="button" wire:click="addLine" wire:loading.attr="disabled" wire:target="addLine" class="btn btn-primary py-1.5 text-xs">
-            <x-spinner class="h-3.5 w-3.5" wire:loading wire:target="addLine" />
-            + Add product
-        </button>
+        <div class="flex flex-wrap items-end gap-2">
+            <div>
+                <label class="label" for="bulk-discount">Discount % for all items</label>
+                <input id="bulk-discount" type="text" inputmode="decimal" wire:model="bulk_discount"
+                    wire:keydown.enter.prevent="applyDiscountToAll"
+                    class="field w-28" placeholder="0" onfocus="this.select()">
+                @error('bulk_discount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+            <button type="button" wire:click="applyDiscountToAll" wire:loading.attr="disabled" wire:target="applyDiscountToAll" class="btn btn-ghost py-1.5 text-xs">
+                <x-spinner class="h-3.5 w-3.5" wire:loading wire:target="applyDiscountToAll" />
+                Apply to all
+            </button>
+            <button type="button" wire:click="addLine" wire:loading.attr="disabled" wire:target="addLine" class="btn btn-primary py-1.5 text-xs">
+                <x-spinner class="h-3.5 w-3.5" wire:loading wire:target="addLine" />
+                + Add product
+            </button>
+        </div>
     </div>
 
     <div class="card overflow-hidden">

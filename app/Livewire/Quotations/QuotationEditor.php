@@ -11,6 +11,7 @@ use App\Services\QuotationCalculator;
 use App\Services\QuotationNumberService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -75,6 +76,8 @@ class QuotationEditor extends Component
     public string $nc_emirate = '';
 
     public string $nc_trn = '';
+
+    public string $bulk_discount = '';
 
     protected function validationAttributes(): array
     {
@@ -255,6 +258,23 @@ class QuotationEditor extends Component
         }
 
         $this->lines[$i] = QuotationCalculator::line($this->lines[$i]);
+    }
+
+    public function applyDiscountToAll(): void
+    {
+        $this->validate([
+            'bulk_discount' => ['required', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        $percent = QuotationCalculator::number($this->bulk_discount);
+        $display = rtrim(rtrim(number_format($percent, 3, '.', ''), '0'), '.');
+
+        foreach ($this->lines as $i => $line) {
+            $this->lines[$i]['discount_percent'] = $display;
+            $this->lines[$i] = QuotationCalculator::line($this->lines[$i]);
+        }
+
+        $this->bulk_discount = $display;
     }
 
     public function searchLineProducts(int $index): void
@@ -695,16 +715,48 @@ class QuotationEditor extends Component
 
         if ($photo) {
             $path = $photo->store('quotation-items/'.$quotation->id, 'public');
-        }
-
-        if ($path && $product->images()->doesntExist()) {
-            $product->images()->create([
-                'path' => $path,
-                'sort_order' => 1,
-            ]);
+            $this->syncCatalogueImage($product, $path, replace: true);
+        } elseif ($path && $product->images()->doesntExist()) {
+            $this->syncCatalogueImage($product, $path, replace: false);
         }
 
         return $path ?: null;
+    }
+
+    protected function syncCatalogueImage(Product $product, string $sourcePath, bool $replace): void
+    {
+        $disk = Storage::disk('public');
+        if (! $disk->exists($sourcePath)) {
+            return;
+        }
+
+        $extension = pathinfo($sourcePath, PATHINFO_EXTENSION) ?: 'jpg';
+        $dest = 'products/'.$product->id.'/catalog-'.uniqid('', true).'.'.$extension;
+        $disk->copy($sourcePath, $dest);
+
+        $image = $product->images()->orderBy('sort_order')->first();
+
+        if ($image && $replace) {
+            $old = $image->path;
+            $image->update(['path' => $dest]);
+            if (
+                $old
+                && $old !== $dest
+                && $old !== $sourcePath
+                && str_starts_with($old, 'products/'.$product->id.'/')
+            ) {
+                $disk->delete($old);
+            }
+
+            return;
+        }
+
+        if (! $image) {
+            $product->images()->create([
+                'path' => $dest,
+                'sort_order' => 1,
+            ]);
+        }
     }
 
     public function render()
