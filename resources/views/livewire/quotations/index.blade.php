@@ -60,6 +60,11 @@
                                         · {{ rtrim(rtrim(number_format($quote->proformaPercentInvoiced(), 2, '.', ''), '0'), '.') }}% billed
                                     </div>
                                 @endif
+                                @if ($quote->active_purchase_orders_count)
+                                    <div class="mt-0.5 text-[11px] text-stone-500">
+                                        {{ $quote->active_purchase_orders_count }} active LPO{{ $quote->active_purchase_orders_count === 1 ? '' : 's' }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-4 py-3">{{ $quote->client?->name }}</td>
                             <td class="px-4 py-3">{{ $quote->quote_date->format('d M Y') }}</td>
@@ -81,6 +86,7 @@
                                     <x-spinner class="h-3 w-3" wire:loading wire:target="openProforma({{ $quote->id }})" />
                                     Proforma
                                 </button>
+                                <a href="{{ route('purchase-orders.index', ['quotation' => $quote->id]) }}" class="ml-2 text-zenora hover:underline" wire:navigate>LPO</a>
                                 @if ($quote->status === 'accepted')
                                     <a href="{{ route('quotations.invoice', $quote) }}" target="_blank" class="ml-2 text-zenora hover:underline">Invoice</a>
                                 @endif

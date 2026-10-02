@@ -82,6 +82,11 @@ class Quotation extends Model
         return $this->hasMany(ProformaInvoice::class)->orderBy('id');
     }
 
+    public function purchaseOrders(): HasMany
+    {
+        return $this->hasMany(PurchaseOrder::class)->orderBy('id');
+    }
+
     public function proformaPercentInvoiced(): float
     {
         if ($this->relationLoaded('proformas')) {

@@ -321,6 +321,7 @@ class Index extends Component
     {
         $quotations = Quotation::query()
             ->with(['client', 'proformas.receipt'])
+            ->withCount(['purchaseOrders as active_purchase_orders_count' => fn ($q) => $q->issued()])
             ->when($this->search, function ($q) {
                 $term = '%'.$this->search.'%';
                 $q->where(function ($inner) use ($term) {
