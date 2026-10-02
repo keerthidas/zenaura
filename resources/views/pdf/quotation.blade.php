@@ -118,36 +118,38 @@
     <table class="items">
         <thead>
             <tr>
-                <th width="8%"></th>
-                <th width="13%">Article</th>
+                <th width="7%"></th>
+                <th width="11%">Article</th>
                 <th>Description</th>
-                <th width="6%">Unit</th>
-                <th width="6%" class="right">Qty</th>
-                <th width="10%" class="right">Sales Price</th>
-                <th width="7%" class="right">Disc %</th>
-                <th width="11%" class="right">Value (Ex. VAT)</th>
-                <th width="9%" class="right">VAT Value</th>
-                <th width="11%" class="right">Value (Inc. VAT)</th>
+                <th width="5%">Unit</th>
+                <th width="5%" class="right">Qty</th>
+                <th width="9%" class="right">Sales Price</th>
+                <th width="6%" class="right">Disc %</th>
+                <th width="9%" class="right">Net sales<br>price</th>
+                <th width="10%" class="right">Value (Ex. VAT)</th>
+                <th width="8%" class="right">VAT Value</th>
+                <th width="10%" class="right">Value (Inc. VAT)</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($quotation->groupedForPdf() as $group)
                 @if ($group['heading'] !== '')
                     <tr class="heading">
-                        <td colspan="9">{{ strtoupper($group['heading']) }}</td>
+                        <td colspan="10">{{ strtoupper($group['heading']) }}</td>
                         <td class="right">{{ number_format($group['total'], 2) }}</td>
                     </tr>
                 @endif
                 @foreach ($group['subs'] as $sub)
                     @if ($sub['title'] !== '')
                         <tr class="subhead">
-                            <td colspan="10">{{ strtoupper($sub['title']) }}</td>
+                            <td colspan="11">{{ strtoupper($sub['title']) }}</td>
                         </tr>
                     @endif
                     @foreach ($sub['items'] as $item)
                         @php
                             $net = round(((float) $item->amount) * (1 - ((float) $item->discount_percent / 100)), 2);
                             $discountPercent = (float) $item->discount_percent;
+                            $netSalesPrice = round((float) $item->selling_price * (1 - ($discountPercent / 100)), 2);
                             $itemImage = $itemImages[$item->id] ?? null;
                         @endphp
                         <tr>
@@ -162,6 +164,7 @@
                             <td class="right">{{ rtrim(rtrim(number_format((float) $item->qty, 3, '.', ''), '0'), '.') }}</td>
                             <td class="right">{{ number_format((float) $item->selling_price, 2) }}</td>
                             <td class="right">{{ $discountPercent > 0 ? number_format($discountPercent, 2) : '—' }}</td>
+                            <td class="right">{{ number_format($netSalesPrice, 2) }}</td>
                             <td class="right">{{ number_format($net, 2) }}</td>
                             <td class="right">{{ number_format((float) $item->vat_amount, 2) }}</td>
                             <td class="right">{{ number_format((float) $item->line_total, 2) }}</td>

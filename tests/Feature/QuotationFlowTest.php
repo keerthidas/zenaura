@@ -57,6 +57,10 @@ class QuotationFlowTest extends TestCase
         ])->render();
 
         $this->assertStringContainsString('Disc %', $pdfHtml);
+        $this->assertGreaterThan(strpos($pdfHtml, '>Qty<'), strpos($pdfHtml, 'Sales Price'));
+        $this->assertGreaterThan(strpos($pdfHtml, 'Sales Price'), strpos($pdfHtml, 'Disc %'));
+        $this->assertGreaterThan(strpos($pdfHtml, 'Disc %'), strpos($pdfHtml, 'Net sales'));
+        $this->assertStringContainsString('130.50', $pdfHtml);
         $this->assertStringContainsString('Discount', $pdfHtml);
         $this->assertStringContainsString('10.00', $pdfHtml);
         $this->assertStringContainsString('29.00', $pdfHtml);
@@ -397,6 +401,13 @@ class QuotationFlowTest extends TestCase
         $this->assertStringNotContainsString('This is a quotation, not a tax invoice', $html);
         $this->assertStringContainsString($product->code, $html);
         $this->assertStringContainsString($product->description, $html);
+        $this->assertGreaterThan(strpos($html, '>Qty<'), strpos($html, 'Sales price'));
+        $this->assertGreaterThan(strpos($html, 'Sales price'), strpos($html, 'Discount%'));
+        $this->assertGreaterThan(strpos($html, 'Discount%'), strpos($html, 'Net sales'));
+
+        $line = $quote->items->first();
+        $netSalesPrice = round((float) $line->selling_price * (1 - ((float) $line->discount_percent / 100)), 2);
+        $this->assertStringContainsString(number_format($netSalesPrice, 2), $html);
     }
 
     public function test_staff_can_upload_a_line_image_from_the_quotation(): void
