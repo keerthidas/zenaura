@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CompanySetting;
 use App\Models\Quotation;
+use App\Support\QuotationPdfMerger;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -23,7 +24,7 @@ class QuotationPdfController extends Controller
             }
         }
 
-        $pdf = Pdf::loadView('pdf.quotation', [
+        $quotationPdf = Pdf::loadView('pdf.quotation', [
             'quotation' => $quotation,
             'settings' => $settings,
             'logoDataUri' => $logoDataUri,
@@ -31,7 +32,14 @@ class QuotationPdfController extends Controller
         ])->setPaper('a4', 'portrait');
 
         $filename = str_replace(['/', '\\'], '-', $quotation->number).'.pdf';
+        $pdf = app(QuotationPdfMerger::class)->append(
+            $quotationPdf->output(),
+            resource_path('pdf/brand-board.pdf'),
+        );
 
-        return $pdf->stream($filename);
+        return response($pdf, Response::HTTP_OK, [
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 }
