@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\DeliveryNotePdfController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ProformaPdfController;
 use App\Http\Controllers\PurchaseOrderPdfController;
@@ -10,6 +11,8 @@ use App\Livewire\Auth\Login;
 use App\Livewire\Clients\ClientForm;
 use App\Livewire\Clients\Index as ClientsIndex;
 use App\Livewire\Dashboard;
+use App\Livewire\DeliveryNotes\Create as DeliveryNoteCreate;
+use App\Livewire\DeliveryNotes\Index as DeliveryNotesIndex;
 use App\Livewire\Leads\Index as LeadsIndex;
 use App\Livewire\Leads\LeadForm;
 use App\Livewire\Leads\LeadShow;
@@ -72,6 +75,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/quotations/{quotation}/invoice', InvoicePdfController::class)->name('quotations.invoice');
     Route::get('/quotations/{quotation}/proformas/{proforma}', ProformaPdfController::class)->name('quotations.proforma');
     Route::get('/quotations/{quotation}/proformas/{proforma}/receipt/{receipt}', ReceiptPdfController::class)->name('quotations.receipt');
+
+    Route::get('/delivery-notes', DeliveryNotesIndex::class)->name('delivery-notes.index');
+    Route::get('/delivery-notes/create', DeliveryNoteCreate::class)->name('delivery-notes.create');
+    Route::get('/delivery-notes/{deliveryNote}/pdf', DeliveryNotePdfController::class)->name('delivery-notes.pdf');
 
     Route::get('/suppliers', SuppliersIndex::class)->name('suppliers.index');
     Route::get('/suppliers/create', SupplierForm::class)->name('suppliers.create');

@@ -4,7 +4,10 @@
             <p class="text-xs uppercase tracking-[0.2em] text-stone-500">Sales</p>
             <h1 class="font-display text-3xl">Quotations</h1>
         </div>
-        <a href="{{ route('quotations.create') }}" class="btn btn-copper" wire:navigate>New quotation</a>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('delivery-notes.index') }}" class="btn btn-ghost" wire:navigate>Delivery notes</a>
+            <a href="{{ route('quotations.create') }}" class="btn btn-copper" wire:navigate>New quotation</a>
+        </div>
     </div>
 
     <div class="mb-4 flex flex-wrap gap-3">
@@ -87,6 +90,9 @@
                                     Proforma
                                 </button>
                                 <a href="{{ route('purchase-orders.index', ['quotation' => $quote->id]) }}" class="ml-2 text-zenora hover:underline" wire:navigate>LPO</a>
+                                @if ($quote->status === 'accepted')
+                                    <a href="{{ route('delivery-notes.create', ['quotation' => $quote->id]) }}" class="ml-2 text-zenora hover:underline" wire:navigate>Delivery note</a>
+                                @endif
                                 @if ($quote->status === 'accepted')
                                     <a href="{{ route('quotations.invoice', $quote) }}" target="_blank" class="ml-2 text-zenora hover:underline">Invoice</a>
                                 @endif
