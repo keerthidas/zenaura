@@ -35,6 +35,7 @@ class ProformaInvoiceTest extends TestCase
             ->set('proformaPercent', '50')
             ->set('proformaPaymentTerms', '50% Advance, 50% Before Delivery')
             ->set('proformaDeliveryTerms', 'Within 2 days from Payment')
+            ->set('proformaClientLpoReferenceNo', 'LPO-2026-019')
             ->call('createProforma')
             ->assertHasNoErrors();
 
@@ -44,6 +45,7 @@ class ProformaInvoiceTest extends TestCase
         $this->assertStringStartsWith('ZS/PI/'.now()->format('my').'/', $first->number);
         $this->assertSame('50% Advance, 50% Before Delivery', $first->payment_terms);
         $this->assertSame('Within 2 days from Payment', $first->delivery_terms);
+        $this->assertSame('LPO-2026-019', $first->client_lpo_reference_no);
         $this->assertEquals(130.50, (float) $first->subtotal);
         $this->assertEquals(137.03, (float) $first->grand_total);
         $this->assertSame(50.0, $quote->fresh()->load('proformas')->proformaRemainingPercent());
@@ -92,6 +94,8 @@ class ProformaInvoiceTest extends TestCase
 
         $this->assertStringContainsString('Proforma Invoice', $html);
         $this->assertStringContainsString($first->number, $html);
+        $this->assertStringContainsString('Client LPO Reference No.', $html);
+        $this->assertStringContainsString('LPO-2026-019', $html);
         $this->assertStringContainsString(ProformaInvoice::DEFAULT_DESCRIPTION, $html);
         $this->assertStringContainsString('As per attached details and quantities in QTN '.$quote->number, $html);
         $this->assertStringContainsString('50% Advance, 50% Before Delivery', $html);
@@ -189,8 +193,16 @@ class ProformaInvoiceTest extends TestCase
     {
         $this->seed();
         $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
-        $client = Client::firstOrFail();
-        $product = Product::where('code', 'TAP-001')->firstOrFail();
+        $client = Client::create([
+            'name' => 'Test Client',
+            'trn' => 'TEST-TRN',
+        ]);
+        $product = Product::create([
+            'code' => 'TEST-001',
+            'description' => 'Test product',
+            'actual_price' => 145,
+            'selling_price' => 145,
+        ]);
 
         Livewire::actingAs($user)
             ->test(QuotationEditor::class)

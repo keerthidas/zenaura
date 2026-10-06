@@ -81,6 +81,7 @@ class ProformaNumberService
         string $description,
         string $paymentTerms,
         string $deliveryTerms,
+        ?string $clientLpoReferenceNo = null,
     ): ProformaInvoice {
         $remaining = $quotation->proformaRemainingPercent();
 
@@ -97,6 +98,7 @@ class ProformaNumberService
             'description' => $description,
             'payment_terms' => $paymentTerms,
             'delivery_terms' => $deliveryTerms,
+            'client_lpo_reference_no' => $clientLpoReferenceNo,
             'created_by' => Auth::id(),
         ]));
     }

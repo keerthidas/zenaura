@@ -21,6 +21,7 @@ class ProformaInvoice extends Model
         'description',
         'payment_terms',
         'delivery_terms',
+        'client_lpo_reference_no',
         'subtotal',
         'vat_total',
         'grand_total',

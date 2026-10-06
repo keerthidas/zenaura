@@ -40,6 +40,8 @@ class Index extends Component
 
     public string $proformaDeliveryTerms = '';
 
+    public string $proformaClientLpoReferenceNo = '';
+
     public ?int $receiptProformaId = null;
 
     public string $receiptDate = '';
@@ -86,9 +88,10 @@ class Index extends Component
         $this->proformaDescription = ProformaInvoice::DEFAULT_DESCRIPTION;
         $this->proformaPaymentTerms = (string) ($quote->payment_terms ?: 'CASH IN ADVANCE');
         $this->proformaDeliveryTerms = (string) ($quote->delivery_availability ?: $quote->delivery ?: 'TO BE CONFIRMED');
+        $this->proformaClientLpoReferenceNo = '';
         $this->showProformaForm = $quote->proformas->isEmpty() && $remaining > 0;
         $this->reset(['receiptProformaId', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
-        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms', 'proformaClientLpoReferenceNo', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
     }
 
     public function closeProforma(): void
@@ -99,13 +102,14 @@ class Index extends Component
             'proformaDescription',
             'proformaPaymentTerms',
             'proformaDeliveryTerms',
+            'proformaClientLpoReferenceNo',
             'receiptProformaId',
             'receiptDate',
             'receiptPaymentMode',
             'receiptReference',
             'showProformaForm',
         ]);
-        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms', 'proformaClientLpoReferenceNo', 'receiptDate', 'receiptPaymentMode', 'receiptReference']);
     }
 
     public function createProforma(ProformaNumberService $numbers)
@@ -121,6 +125,7 @@ class Index extends Component
             'proformaDescription' => ['required', 'string', 'max:2000'],
             'proformaPaymentTerms' => ['required', 'string', 'max:150'],
             'proformaDeliveryTerms' => ['required', 'string', 'max:150'],
+            'proformaClientLpoReferenceNo' => ['nullable', 'string', 'max:100'],
         ], [], [
             'proformaPercent' => 'percent',
             'proformaDescription' => 'description',
@@ -143,6 +148,7 @@ class Index extends Component
             trim($this->proformaDescription),
             trim($this->proformaPaymentTerms),
             trim($this->proformaDeliveryTerms),
+            trim($this->proformaClientLpoReferenceNo) ?: null,
         );
 
         flash_app_toast($this, 'Proforma invoice '.$proforma->number.' generated.');
@@ -161,13 +167,14 @@ class Index extends Component
         $quote = Quotation::with('proformas')->findOrFail($this->proformaQuoteId);
         $remaining = $quote->proformaRemainingPercent();
         $this->proformaPercent = $remaining > 0 ? (string) min(50, $remaining) : '';
+        $this->proformaClientLpoReferenceNo = '';
         $this->showProformaForm = true;
     }
 
     public function cancelNewProforma(): void
     {
         $this->showProformaForm = false;
-        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms']);
+        $this->resetErrorBag(['proformaPercent', 'proformaDescription', 'proformaPaymentTerms', 'proformaDeliveryTerms', 'proformaClientLpoReferenceNo']);
     }
 
     public function deleteProforma(int $id): void

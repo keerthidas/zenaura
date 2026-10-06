@@ -193,6 +193,11 @@
                                 </div>
                             </div>
                             <div>
+                                <label class="label">Client LPO Reference No. (optional)</label>
+                                <input wire:model="proformaClientLpoReferenceNo" class="field" maxlength="100">
+                                @error('proformaClientLpoReferenceNo') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
                                 <label class="label">Description</label>
                                 <textarea wire:model="proformaDescription" rows="3" class="field"></textarea>
                                 @error('proformaDescription') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror

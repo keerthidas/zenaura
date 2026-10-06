@@ -165,6 +165,12 @@
             <td class="k">Delivery terms</td>
             <td class="v">{{ $deliveryTerms }}</td>
         </tr>
+        @if ($proforma->client_lpo_reference_no)
+            <tr>
+                <td class="k">Client LPO Reference No.</td>
+                <td class="v" colspan="5">{{ $proforma->client_lpo_reference_no }}</td>
+            </tr>
+        @endif
     </table>
 
     <table class="items">
