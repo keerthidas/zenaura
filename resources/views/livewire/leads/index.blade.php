@@ -48,6 +48,7 @@
                         <th class="px-4 py-3">Est. value</th>
                         <th class="px-4 py-3">Close date</th>
                         <th class="px-4 py-3">Follow-ups</th>
+                        <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -70,9 +71,12 @@
                                     <span class="text-stone-400">—</span>
                                 @endif
                             </td>
+                            <td class="px-4 py-3 text-right">
+                                <button wire:click="delete({{ $lead->id }})" wire:confirm="Delete this lead from the pipeline?" class="text-red-600 hover:underline">Delete</button>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-4 py-12 text-center text-stone-500">No leads yet. Add a lead to start tracking your sales pipeline.</td></tr>
+                        <tr><td colspan="7" class="px-4 py-12 text-center text-stone-500">No leads yet. Add a lead to start tracking your sales pipeline.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -29,7 +29,10 @@ class ClientForm extends Component
     {
         if ($client?->exists) {
             $this->client = $client;
-            $this->fill($client->only(['name', 'phone', 'email', 'address', 'emirate', 'trn', 'notes']));
+            $this->fill(array_map(
+                fn ($value) => $value ?? '',
+                $client->only(['name', 'phone', 'email', 'address', 'emirate', 'trn', 'notes']),
+            ));
         }
     }
 

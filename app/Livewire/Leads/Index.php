@@ -31,6 +31,13 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function delete(int $id): void
+    {
+        Lead::findOrFail($id)->delete();
+        $this->resetPage();
+        session()->flash('success', 'Lead deleted.');
+    }
+
     public function render()
     {
         $leads = Lead::query()

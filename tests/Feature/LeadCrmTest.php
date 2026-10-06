@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Livewire\Leads\LeadForm;
+use App\Livewire\Leads\Index as LeadsIndex;
 use App\Livewire\Leads\LeadShow;
 use App\Livewire\Leads\Reminders;
+use App\Livewire\Clients\ClientForm;
 use App\Livewire\Quotations\QuotationEditor;
 use App\Models\Client;
 use App\Models\CompanySetting;
@@ -52,6 +54,23 @@ class LeadCrmTest extends TestCase
             ->assertOk()
             ->assertSee('Active leads')
             ->assertSee('Open follow-ups');
+    }
+
+    public function test_a_lead_can_be_deleted_from_the_pipeline(): void
+    {
+        $user = User::factory()->create();
+        $lead = Lead::create(['name' => 'Remove This Lead', 'status' => 'new']);
+        $remainingLead = Lead::create(['name' => 'Keep This Lead', 'status' => 'new']);
+
+        Livewire::actingAs($user)
+            ->test(LeadsIndex::class)
+            ->call('delete', $lead->id)
+            ->assertHasNoErrors()
+            ->assertDontSee($lead->name)
+            ->assertSee($remainingLead->name);
+
+        $this->assertSoftDeleted('leads', ['id' => $lead->id]);
+        $this->assertSame(1, Lead::where('status', 'new')->count());
     }
 
     public function test_lead_activities_support_minutes_reminders_rescheduling_and_completion(): void
@@ -122,6 +141,9 @@ class LeadCrmTest extends TestCase
         $this->assertSame('Prospect Interiors', $client->name);
         $this->assertSame('+971500000000', $client->phone);
         $this->assertNull($client->trn);
+        Livewire::actingAs($user)
+            ->test(ClientForm::class, ['client' => $client])
+            ->assertSet('trn', '');
         $this->assertDatabaseHas('lead_activities', [
             'lead_id' => $lead->id,
             'subject' => 'Lead converted to client',
