@@ -24,6 +24,7 @@
         .party-body { min-height: 56px; padding: 7px; line-height: 1.45; }
         .items { margin-top: 4px; }
         .items th { padding: 6px 4px; background: #0e3d44; color: #fff; text-align: left; }
+        .items th.right { text-align: right; }
         .items td { padding: 6px 4px; border-bottom: .5px solid #ccc; vertical-align: top; }
         .items thead { display: table-header-group; }
         .items tbody tr { page-break-inside: avoid; }
@@ -47,6 +48,9 @@
         $client = $deliveryNote->quotation?->client;
         $supplier = $deliveryNote->supplier;
         $companyAddress = collect([$settings->address, $settings->emirate])->filter()->implode(', ');
+        $currency = $settings->currency ?: 'AED';
+        $taxInvoiceNumber = trim((string) $deliveryNote->quotation?->invoice_number) ?: '—';
+        $customerVatNumber = trim((string) ($client?->trn ?? '')) ?: 'N/A';
         $quantity = fn ($value) => rtrim(rtrim(number_format((float) $value, 3, '.', ''), '0'), '.');
     @endphp
 
@@ -82,6 +86,16 @@
             <td class="value">{{ $deliveryNote->quotation?->number }}</td>
             <td class="key">Quotation date</td>
             <td class="value">{{ $deliveryNote->quotation?->quote_date?->format('d/m/Y') }}</td>
+        </tr>
+        <tr>
+            <td class="key">Tax Invoice No.</td>
+            <td class="value">{{ $taxInvoiceNumber }}</td>
+            <td class="key">Currency</td>
+            <td class="value">{{ $currency }}</td>
+        </tr>
+        <tr>
+            <td class="key">Customer VAT No.</td>
+            <td class="value" colspan="3">{{ $customerVatNumber }}</td>
         </tr>
     </table>
 
@@ -141,6 +155,7 @@
     @endif
 
     <div class="confirmation-title">Delivery Confirmation</div>
+    <p class="confirmation-text">The above goods have been delivered in accordance with the referenced sales order.</p>
     <table class="signatures">
         <tr>
             <td>

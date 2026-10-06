@@ -70,11 +70,15 @@ class DeliveryNoteTest extends TestCase
         ])->render();
         $this->assertStringContainsString('DELIVERY NOTE', $html);
         $this->assertStringContainsString('Sales Order No.', $html);
+        $this->assertStringContainsString('Tax Invoice No.', $html);
+        $this->assertStringContainsString('Currency', $html);
+        $this->assertStringContainsString('Customer VAT No.', $html);
         $this->assertStringContainsString('Article No.', $html);
         $this->assertStringContainsString('Description', $html);
         $this->assertStringContainsString('Qty', $html);
         $this->assertStringContainsString('Unit', $html);
         $this->assertStringContainsString('Delivery Confirmation', $html);
+        $this->assertStringContainsString('The above goods have been delivered in accordance with the referenced sales order.', $html);
         $this->assertStringContainsString('For Zenaura Sanitary Trading', $html);
         $this->assertStringContainsString('Received by Customer', $html);
         $this->assertStringNotContainsString('Previously delivered', $html);

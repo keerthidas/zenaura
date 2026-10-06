@@ -81,43 +81,64 @@
                                 </select>
                             </td>
                             <td class="px-4 py-3 text-right">{{ aed($quote->grand_total) }}</td>
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
-                                <a href="{{ route('quotations.pdf', $quote) }}" target="_blank" class="text-zenora hover:underline">PDF</a>
-                                <button type="button" wire:click="openProforma({{ $quote->id }})"
-                                    wire:loading.attr="disabled" wire:target="openProforma({{ $quote->id }})"
-                                    class="ml-2 inline-flex items-center gap-1 text-zenora hover:underline disabled:cursor-wait disabled:opacity-55">
-                                    <x-spinner class="h-3 w-3" wire:loading wire:target="openProforma({{ $quote->id }})" />
-                                    Proforma
-                                </button>
-                                <a href="{{ route('purchase-orders.index', ['quotation' => $quote->id]) }}" class="ml-2 text-zenora hover:underline" wire:navigate>LPO</a>
-                                @if ($quote->status === 'accepted')
-                                    <a href="{{ route('delivery-notes.create', ['quotation' => $quote->id]) }}" class="ml-2 text-zenora hover:underline" wire:navigate>Delivery note</a>
-                                @endif
-                                @if ($quote->status === 'accepted')
-                                    <a href="{{ route('quotations.invoice', $quote) }}" target="_blank" class="ml-2 text-zenora hover:underline">Invoice</a>
-                                @endif
-                                @if ($quote->isDraft())
-                                    <a href="{{ route('quotations.edit', $quote) }}" class="ml-2 text-zenora hover:underline" wire:navigate>Edit</a>
-                                @else
-                                    <button type="button" wire:click="revise({{ $quote->id }})"
-                                        wire:loading.attr="disabled" wire:target="revise({{ $quote->id }})"
-                                        class="ml-2 inline-flex items-center gap-1 text-zenora hover:underline disabled:cursor-wait disabled:opacity-55">
-                                        <x-spinner class="h-3 w-3" wire:loading wire:target="revise({{ $quote->id }})" />
-                                        Revise
+                            <td class="px-4 py-3 text-right">
+                                <div x-data="{
+                                    open: false,
+                                    top: 0,
+                                    right: 0,
+                                    toggleMenu(button) {
+                                        this.open = ! this.open;
+                                        if (! this.open) return;
+                                        const rect = button.getBoundingClientRect();
+                                        this.top = rect.bottom + 4;
+                                        this.right = window.innerWidth - rect.right;
+                                        this.$nextTick(() => {
+                                            const height = this.$refs.menu?.offsetHeight ?? 0;
+                                            if (this.top + height > window.innerHeight - 8) this.top = Math.max(8, rect.top - height - 4);
+                                        });
+                                    },
+                                }" x-on:scroll.window="open = false" x-on:resize.window="open = false" x-on:keydown.escape.window="open = false" class="relative inline-block text-left">
+                                    <button type="button" x-on:click="toggleMenu($el)" :aria-expanded="open" aria-haspopup="menu" aria-label="Actions for {{ $quote->number }}" title="Actions"
+                                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-stone-200 bg-white text-stone-600 hover:bg-sand hover:text-ink focus:outline-none focus:ring-2 focus:ring-zenora/30">
+                                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                            <circle cx="5" cy="12" r="1.7" />
+                                            <circle cx="12" cy="12" r="1.7" />
+                                            <circle cx="19" cy="12" r="1.7" />
+                                        </svg>
                                     </button>
-                                @endif
-                                <button type="button" wire:click="duplicate({{ $quote->id }})"
-                                    wire:loading.attr="disabled" wire:target="duplicate({{ $quote->id }})"
-                                    class="ml-2 inline-flex items-center gap-1 text-zenora hover:underline disabled:cursor-wait disabled:opacity-55">
-                                    <x-spinner class="h-3 w-3" wire:loading wire:target="duplicate({{ $quote->id }})" />
-                                    Copy
-                                </button>
-                                <button type="button" wire:click="delete({{ $quote->id }})" wire:confirm="Archive this quotation?"
-                                    wire:loading.attr="disabled" wire:target="delete({{ $quote->id }})"
-                                    class="ml-2 inline-flex items-center gap-1 text-red-600 hover:underline disabled:cursor-wait disabled:opacity-55">
-                                    <x-spinner class="h-3 w-3" wire:loading wire:target="delete({{ $quote->id }})" />
-                                    Delete
-                                </button>
+                                    <template x-teleport="body">
+                                    <div x-ref="menu" x-cloak x-show="open" x-transition.origin.top.right x-on:click.outside="open = false" :style="`position:fixed;top:${top}px;right:${right}px`" role="menu"
+                                        class="z-[100] max-h-[70vh] w-48 overflow-y-auto rounded-lg border border-stone-200 bg-white py-1 text-left shadow-lg">
+                                        <a role="menuitem" href="{{ route('quotations.pdf', $quote) }}" target="_blank" x-on:click="open = false" class="block px-3 py-2 text-sm text-ink hover:bg-sand">Quotation PDF</a>
+                                        <button type="button" role="menuitem" wire:click="openProforma({{ $quote->id }})" x-on:click="open = false"
+                                            wire:loading.attr="disabled" wire:target="openProforma({{ $quote->id }})" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-sand disabled:opacity-55">
+                                            <x-spinner class="h-3 w-3" wire:loading wire:target="openProforma({{ $quote->id }})" /> Proforma
+                                        </button>
+                                        <a role="menuitem" href="{{ route('purchase-orders.index', ['quotation' => $quote->id]) }}" wire:navigate x-on:click="open = false" class="block px-3 py-2 text-sm text-ink hover:bg-sand">LPOs</a>
+                                        @if ($quote->status === 'accepted')
+                                            <a role="menuitem" href="{{ route('delivery-notes.create', ['quotation' => $quote->id]) }}" wire:navigate x-on:click="open = false" class="block px-3 py-2 text-sm text-ink hover:bg-sand">Delivery note</a>
+                                            <a role="menuitem" href="{{ route('quotations.invoice', $quote) }}" target="_blank" x-on:click="open = false" class="block px-3 py-2 text-sm text-ink hover:bg-sand">Tax invoice</a>
+                                        @endif
+                                        @if ($quote->isDraft())
+                                            <a role="menuitem" href="{{ route('quotations.edit', $quote) }}" wire:navigate x-on:click="open = false" class="block px-3 py-2 text-sm text-ink hover:bg-sand">Edit</a>
+                                        @else
+                                            <button type="button" role="menuitem" wire:click="revise({{ $quote->id }})" x-on:click="open = false"
+                                                wire:loading.attr="disabled" wire:target="revise({{ $quote->id }})" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-sand disabled:opacity-55">
+                                                <x-spinner class="h-3 w-3" wire:loading wire:target="revise({{ $quote->id }})" /> Revise
+                                            </button>
+                                        @endif
+                                        <button type="button" role="menuitem" wire:click="duplicate({{ $quote->id }})" x-on:click="open = false"
+                                            wire:loading.attr="disabled" wire:target="duplicate({{ $quote->id }})" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-sand disabled:opacity-55">
+                                            <x-spinner class="h-3 w-3" wire:loading wire:target="duplicate({{ $quote->id }})" /> Copy quotation
+                                        </button>
+                                        <div class="my-1 border-t border-stone-100"></div>
+                                        <button type="button" role="menuitem" wire:click="delete({{ $quote->id }})" x-on:click="open = false" wire:confirm="Archive this quotation?"
+                                            wire:loading.attr="disabled" wire:target="delete({{ $quote->id }})" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50 disabled:opacity-55">
+                                            <x-spinner class="h-3 w-3" wire:loading wire:target="delete({{ $quote->id }})" /> Archive quotation
+                                        </button>
+                                    </div>
+                                    </template>
+                                </div>
                             </td>
                         </tr>
                     @empty
