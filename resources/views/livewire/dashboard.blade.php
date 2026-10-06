@@ -22,6 +22,46 @@
         @endforeach
     </div>
 
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+        <a href="{{ route('leads.index') }}" class="card p-5 transition hover:border-zenora" wire:navigate>
+            <p class="text-xs uppercase tracking-wide text-stone-500">Active leads</p>
+            <p class="mt-2 font-display text-3xl">{{ $leadCount }}</p>
+            <p class="mt-1 text-xs text-stone-500">View sales pipeline</p>
+        </a>
+        <a href="{{ route('leads.index') }}" class="card p-5 transition hover:border-zenora" wire:navigate>
+            <p class="text-xs uppercase tracking-wide text-stone-500">Pipeline value</p>
+            <p class="mt-2 font-display text-3xl">{{ aed($pipelineValue) }}</p>
+            <p class="mt-1 text-xs text-stone-500">Open opportunities</p>
+        </a>
+        <a href="{{ route('leads.reminders') }}" class="card p-5 transition hover:border-zenora" wire:navigate>
+            <p class="text-xs uppercase tracking-wide text-stone-500">Open follow-ups</p>
+            <p class="mt-2 font-display text-3xl">{{ $openReminderCount }}</p>
+            <p class="mt-1 text-xs text-stone-500">Due or scheduled</p>
+        </a>
+    </div>
+
+    <div class="card mt-8 overflow-hidden">
+        <div class="flex items-center justify-between border-b border-stone-100 px-5 py-4">
+            <h2 class="font-medium">Follow-ups due soon</h2>
+            <a href="{{ route('leads.reminders') }}" class="text-sm text-zenora hover:underline" wire:navigate>All reminders</a>
+        </div>
+        <div class="divide-y divide-stone-100">
+            @forelse ($upcomingReminders as $reminder)
+                <a href="{{ route('leads.show', $reminder->lead) }}" class="flex flex-wrap items-center justify-between gap-2 px-5 py-3 hover:bg-sand/30" wire:navigate>
+                    <span>
+                        <span class="block text-sm font-medium">{{ $reminder->lead->company ?: $reminder->lead->name }}</span>
+                        <span class="text-xs text-stone-500">{{ $reminder->subject }}</span>
+                    </span>
+                    <span class="text-xs {{ $reminder->isOverdue() ? 'font-medium text-red-700' : 'text-stone-500' }}">
+                        {{ $reminder->isOverdue() ? 'Overdue · ' : '' }}{{ $reminder->reminder_at->format('d M, H:i') }}
+                    </span>
+                </a>
+            @empty
+                <p class="px-5 py-8 text-center text-sm text-stone-500">No follow-ups due in the next 7 days.</p>
+            @endforelse
+        </div>
+    </div>
+
     <div class="card mt-8 overflow-hidden">
         <div class="flex items-center justify-between border-b border-stone-100 px-5 py-4">
             <h2 class="font-medium">Recent quotations</h2>

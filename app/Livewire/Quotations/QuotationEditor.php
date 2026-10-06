@@ -136,6 +136,18 @@ class QuotationEditor extends Component
         } else {
             $this->number = $numbers->preview();
             $this->lines = [$this->blankItem()];
+
+            $clientId = request()->integer('client');
+            if ($clientId) {
+                $client = Client::query()->findOrFail($clientId);
+                $this->client_id = $client->id;
+                $this->client_query = $client->name;
+                $this->delivery_details = trim(implode("\n", array_filter([
+                    $client->name,
+                    $client->address,
+                    $client->emirate,
+                ])));
+            }
         }
 
         if ($this->lines === []) {

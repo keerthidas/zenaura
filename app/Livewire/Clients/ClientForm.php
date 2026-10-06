@@ -41,7 +41,7 @@ class ClientForm extends Component
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'emirate' => ['nullable', 'string', 'max:100'],
-            'trn' => ['required', 'string', 'max:50'],
+            'trn' => ['nullable', 'string', 'max:50'],
             'notes' => ['nullable', 'string'],
         ]);
 

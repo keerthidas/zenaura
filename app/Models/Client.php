@@ -24,4 +24,9 @@ class Client extends Model
     {
         return $this->hasMany(Quotation::class);
     }
+
+    public function leads(): HasMany
+    {
+        return $this->hasMany(Lead::class);
+    }
 }

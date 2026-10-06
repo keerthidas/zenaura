@@ -2,7 +2,7 @@
     <div class="mb-6">
         <a href="{{ route('clients.index') }}" class="text-sm text-zenora hover:underline" wire:navigate>← Clients</a>
         <h1 class="mt-2 font-display text-3xl">{{ $client?->exists ? 'Edit client' : 'New client' }}</h1>
-        <p class="text-sm text-stone-500">TRN is required for UAE quotations.</p>
+        <p class="text-sm text-stone-500">Add tax registration details when available.</p>
     </div>
     <form wire:submit="save" class="card space-y-4 p-6">
         <div>

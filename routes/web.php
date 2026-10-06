@@ -10,6 +10,10 @@ use App\Livewire\Auth\Login;
 use App\Livewire\Clients\ClientForm;
 use App\Livewire\Clients\Index as ClientsIndex;
 use App\Livewire\Dashboard;
+use App\Livewire\Leads\Index as LeadsIndex;
+use App\Livewire\Leads\LeadForm;
+use App\Livewire\Leads\LeadShow;
+use App\Livewire\Leads\Reminders as LeadReminders;
 use App\Livewire\Products\Index as ProductsIndex;
 use App\Livewire\Products\ProductForm;
 use App\Livewire\PurchaseOrders\Index as PurchaseOrdersIndex;
@@ -54,6 +58,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/clients', ClientsIndex::class)->name('clients.index');
     Route::get('/clients/create', ClientForm::class)->name('clients.create');
     Route::get('/clients/{client}/edit', ClientForm::class)->name('clients.edit');
+
+    Route::get('/leads', LeadsIndex::class)->name('leads.index');
+    Route::get('/leads/create', LeadForm::class)->name('leads.create');
+    Route::get('/leads/reminders', LeadReminders::class)->name('leads.reminders');
+    Route::get('/leads/{lead}', LeadShow::class)->name('leads.show');
+    Route::get('/leads/{lead}/edit', LeadForm::class)->name('leads.edit');
 
     Route::get('/quotations', QuotationsIndex::class)->name('quotations.index');
     Route::get('/quotations/create', QuotationEditor::class)->name('quotations.create');

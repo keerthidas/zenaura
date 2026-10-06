@@ -56,6 +56,7 @@
                     $links = [
                         ['dashboard', 'Dashboard', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
                         ['quotations.index', 'Quotations', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+                        ['leads.index', 'Sales CRM', 'M16 21v-2a4 4 0 00-8 0v2m12-9a4 4 0 01-3-1.35M4 12a4 4 0 003 3.87M12 11a4 4 0 100-8 4 4 0 000 8zm8 3a4 4 0 00-3-3.87'],
                         ['purchase-orders.index', 'LPOs', 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z'],
                         ['suppliers.index', 'Suppliers', 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4'],
                         ['products.index', 'Products', 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
@@ -106,6 +107,7 @@
             <nav class="flex gap-2 overflow-x-auto border-b border-stone-200 bg-white px-3 py-2 text-sm lg:hidden" x-show="!collapsed" x-cloak>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('dashboard') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('dashboard') }}" wire:navigate>Home</a>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('quotations.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('quotations.index') }}" wire:navigate>Quotes</a>
+                <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('leads.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('leads.index') }}" wire:navigate>CRM</a>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('purchase-orders.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('purchase-orders.index') }}" wire:navigate>LPOs</a>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('suppliers.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('suppliers.index') }}" wire:navigate>Suppliers</a>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('products.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('products.index') }}" wire:navigate>Products</a>
