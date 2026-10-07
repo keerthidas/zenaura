@@ -103,6 +103,98 @@ class QuotationFlowTest extends TestCase
             ->assertSet('lines.1.discount_percent', '5');
     }
 
+    public function test_applying_additional_discount_does_not_require_bulk_discount(): void
+    {
+        $this->seed();
+        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('additional_discount', '25.50')
+            ->call('applyDiscountToAll')
+            ->assertHasNoErrors()
+            ->assertSet('additional_discount', '25.50')
+            ->assertSet('lines.0.discount_percent', '')
+            ->set('bulk_discount', '10')
+            ->call('applyDiscountToAll')
+            ->assertHasNoErrors()
+            ->assertSet('lines.0.discount_percent', '10');
+    }
+
+    public function test_additional_discount_is_independent_and_only_printed_when_applied(): void
+    {
+        $this->seed();
+        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
+        $client = Client::create([
+            'name' => 'Test Customer',
+            'emirate' => 'Dubai',
+            'trn' => 'TEST-TRN',
+        ]);
+        $product = Product::create([
+            'code' => 'TEST-DISC-001',
+            'description' => 'Test item',
+            'actual_price' => 100,
+            'selling_price' => 100,
+            'unit' => 'EACH',
+            'is_active' => true,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('client_id', $client->id)
+            ->call('pickProduct', 0, $product->id)
+            ->set('lines.0.qty', 2)
+            ->set('lines.0.discount_percent', 10)
+            ->assertSee('Net Amount')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $quote = Quotation::firstOrFail();
+        $pdfData = [
+            'quotation' => $quote->load(['client', 'items.product.images']),
+            'settings' => \App\Models\CompanySetting::current(),
+            'logoDataUri' => null,
+            'itemImages' => [],
+        ];
+        $quotationPdfHtml = view('pdf.quotation', $pdfData)->render();
+        $invoicePdfHtml = view('pdf.invoice', [
+            'quotation' => $quote,
+            'settings' => \App\Models\CompanySetting::current(),
+            'logoDataUri' => null,
+            'signatureDataUri' => null,
+            'stampDataUri' => null,
+        ])->render();
+        $this->assertStringNotContainsString('Additional discount', $quotationPdfHtml);
+        $this->assertStringNotContainsString('Additional discount', $invoicePdfHtml);
+        $this->assertEquals(189.00, (float) $quote->grand_total);
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class, ['quotation' => $quote->fresh()])
+            ->set('additional_discount', '10.25')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $quote->refresh();
+        $this->assertEquals(10.25, (float) $quote->additional_discount);
+        $this->assertEquals(178.75, (float) $quote->grand_total);
+        $this->assertEquals(10.00, (float) $quote->items()->first()->discount_percent);
+        $quotationPdfHtml = view('pdf.quotation', [
+            'quotation' => $quote->load(['client', 'items.product.images']),
+            'settings' => \App\Models\CompanySetting::current(),
+            'logoDataUri' => null,
+            'itemImages' => [],
+        ])->render();
+        $invoicePdfHtml = view('pdf.invoice', [
+            'quotation' => $quote,
+            'settings' => \App\Models\CompanySetting::current(),
+            'logoDataUri' => null,
+            'signatureDataUri' => null,
+            'stampDataUri' => null,
+        ])->render();
+        $this->assertStringContainsString('Additional discount', $quotationPdfHtml);
+        $this->assertStringContainsString('Additional discount', $invoicePdfHtml);
+    }
+
     public function test_heading_is_optional_when_saving(): void
     {
         $this->seed();

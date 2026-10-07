@@ -55,6 +55,8 @@ class QuotationEditor extends Component
 
     public array $lines = [];
 
+    public string $additional_discount = '';
+
     public array $suggestions = [];
 
     public array $linePhotos = [];
@@ -127,6 +129,7 @@ class QuotationEditor extends Component
             $this->status = $quotation->status;
             $this->notes = (string) $quotation->notes;
             $this->terms = (string) $quotation->terms;
+            $this->additional_discount = (string) ($quotation->additional_discount ?? '');
             $this->lines = $quotation->items->map(function ($item) {
                 $line = $this->blankItem($item->toArray());
                 $line['image'] = $this->lineImageUrl($item);
@@ -176,6 +179,7 @@ class QuotationEditor extends Component
         $this->status = 'draft';
         $this->notes = (string) $source->notes;
         $this->terms = (string) $source->terms;
+        $this->additional_discount = (string) ($source->additional_discount ?? '');
         $this->lines = $source->items->map(function ($item) {
             $line = $this->blankItem($item->toArray());
             $line['image'] = $this->lineImageUrl($item);
@@ -274,6 +278,12 @@ class QuotationEditor extends Component
 
     public function applyDiscountToAll(): void
     {
+        if (trim($this->bulk_discount) === '') {
+            $this->resetValidation('bulk_discount');
+
+            return;
+        }
+
         $this->validate([
             'bulk_discount' => ['required', 'numeric', 'min:0', 'max:100'],
         ]);
@@ -455,6 +465,12 @@ class QuotationEditor extends Component
                 'status' => ['required', Rule::in(Quotation::STATUSES)],
                 'notes' => ['nullable', 'string'],
                 'terms' => ['nullable', 'string'],
+                'additional_discount' => [
+                    'nullable',
+                    'numeric',
+                    'min:0',
+                    'max:'.QuotationCalculator::totals($items)['grand_total'],
+                ],
                 'linePhotos.*' => ['nullable', 'image', 'max:4096'],
             ], [
                 'client_id.required' => 'Select a client (TRN is required on the client record).',
@@ -481,6 +497,8 @@ class QuotationEditor extends Component
         }
 
         $totals = QuotationCalculator::totals($items);
+        $totals['additional_discount'] = round(QuotationCalculator::number($this->additional_discount), 2);
+        $totals['grand_total'] = round($totals['grand_total'] - $totals['additional_discount'], 2);
         $meta = $numbers->resolveForSave($this->number, \Illuminate\Support\Carbon::parse($this->quote_date));
 
         $quotation = DB::transaction(function () use ($meta, $totals, $items, $invoices) {
@@ -499,6 +517,7 @@ class QuotationEditor extends Component
                 'subtotal' => $totals['subtotal'],
                 'discount_total' => $totals['discount_total'],
                 'vat_total' => $totals['vat_total'],
+                'additional_discount' => $totals['additional_discount'],
                 'grand_total' => $totals['grand_total'],
             ]);
 
@@ -563,7 +582,11 @@ class QuotationEditor extends Component
     #[Computed]
     public function totals(): array
     {
-        return QuotationCalculator::totals($this->preparedLines());
+        $totals = QuotationCalculator::totals($this->preparedLines());
+        $totals['additional_discount'] = round(QuotationCalculator::number($this->additional_discount), 2);
+        $totals['grand_total'] = round($totals['grand_total'] - $totals['additional_discount'], 2);
+
+        return $totals;
     }
 
     /**

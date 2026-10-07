@@ -197,6 +197,13 @@
             <td class="muted">VAT Amount</td>
             <td class="right">AED {{ number_format((float) $quotation->vat_total, 2) }}</td>
         </tr>
+        @if ((float) $quotation->additional_discount > 0)
+            <tr>
+                <td></td>
+                <td class="muted">Additional discount</td>
+                <td class="right">AED {{ number_format((float) $quotation->additional_discount, 2) }}</td>
+            </tr>
+        @endif
         <tr>
             <td></td>
             <td class="grand">Net Amount</td>

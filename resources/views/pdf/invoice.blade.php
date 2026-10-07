@@ -274,6 +274,13 @@
                         <td class="cur">{{ $currency }}</td>
                         <td class="right">{{ number_format($vatTotal, 2) }}</td>
                     </tr>
+                    @if ((float) $quotation->additional_discount > 0)
+                        <tr>
+                            <td class="lab">Additional discount</td>
+                            <td class="cur">{{ $currency }}</td>
+                            <td class="right">{{ number_format((float) $quotation->additional_discount, 2) }}</td>
+                        </tr>
+                    @endif
                     <tr class="net">
                         <td class="lab">Net Amount</td>
                         <td class="cur">{{ $currency }}</td>

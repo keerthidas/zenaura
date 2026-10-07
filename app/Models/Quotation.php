@@ -41,6 +41,7 @@ class Quotation extends Model
         'subtotal',
         'discount_total',
         'vat_total',
+        'additional_discount',
         'grand_total',
         'notes',
         'terms',
@@ -63,6 +64,7 @@ class Quotation extends Model
             'subtotal' => 'decimal:2',
             'discount_total' => 'decimal:2',
             'vat_total' => 'decimal:2',
+            'additional_discount' => 'decimal:2',
             'grand_total' => 'decimal:2',
         ];
     }

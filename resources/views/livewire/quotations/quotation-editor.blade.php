@@ -11,21 +11,9 @@
                 <p class="text-[11px] uppercase tracking-[0.2em] text-teal-200/80">Quotation</p>
                 <p class="break-all font-display text-2xl">{{ $number ?: 'New' }}</p>
             </div>
-            <div class="grid flex-[2] grid-cols-2 sm:grid-cols-4">
-                <div class="border-l border-white/10 px-4 py-4 text-right">
-                    <p class="text-[10px] uppercase tracking-wide text-teal-200/70">Discount</p>
-                    <p class="mt-1 text-sm font-semibold">{{ number_format($this->totals['discount_total'], 2) }}</p>
-                </div>
-                <div class="border-l border-white/10 px-4 py-4 text-right">
-                    <p class="text-[10px] uppercase tracking-wide text-teal-200/70">Ex VAT</p>
-                    <p class="mt-1 text-sm font-semibold">{{ number_format($this->totals['subtotal'] - $this->totals['discount_total'], 2) }}</p>
-                </div>
-                <div class="border-l border-white/10 px-4 py-4 text-right">
-                    <p class="text-[10px] uppercase tracking-wide text-teal-200/70">VAT</p>
-                    <p class="mt-1 text-sm font-semibold">{{ number_format($this->totals['vat_total'], 2) }}</p>
-                </div>
-                <div class="border-l border-white/10 bg-black/20 px-4 py-4 text-right">
-                    <p class="text-[10px] uppercase tracking-wide text-teal-200/70">Inc. VAT</p>
+            <div class="flex flex-[2] items-center justify-end border-l border-white/10 bg-black/20 px-5 py-4 text-right">
+                <div>
+                    <p class="text-[10px] uppercase tracking-wide text-teal-200/70">Net Amount</p>
                     <p class="mt-1 font-display text-xl">{{ aed($this->totals['grand_total']) }}</p>
                 </div>
             </div>
@@ -147,6 +135,13 @@
                     wire:keydown.enter.prevent="applyDiscountToAll"
                     class="field w-28" placeholder="0" onfocus="this.select()">
                 @error('bulk_discount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label class="label" for="additional-discount">Additional discount (AED)</label>
+                <input id="additional-discount" type="text" inputmode="decimal"
+                    wire:model.live.debounce.200ms="additional_discount"
+                    class="field w-36" placeholder="0.00" onfocus="this.select()">
+                @error('additional_discount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
             <button type="button" wire:click="applyDiscountToAll" wire:loading.attr="disabled" wire:target="applyDiscountToAll" class="btn btn-ghost py-1.5 text-xs">
                 <x-spinner class="h-3.5 w-3.5" wire:loading wire:target="applyDiscountToAll" />
