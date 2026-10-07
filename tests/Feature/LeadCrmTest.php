@@ -113,6 +113,39 @@ class LeadCrmTest extends TestCase
         $this->assertNotNull($activity->fresh()->completed_at);
     }
 
+    public function test_reminders_for_deleted_leads_are_excluded_from_dashboard_and_follow_ups(): void
+    {
+        $user = User::factory()->create();
+        $deletedLead = Lead::create(['name' => 'Deleted Prospect', 'status' => 'new']);
+        $activeLead = Lead::create(['name' => 'Active Prospect', 'status' => 'new']);
+
+        foreach ([
+            [$deletedLead, 'Deleted lead reminder'],
+            [$activeLead, 'Active lead reminder'],
+        ] as [$lead, $subject]) {
+            $lead->activities()->create([
+                'created_by' => $user->id,
+                'type' => 'call',
+                'subject' => $subject,
+                'occurred_at' => now(),
+                'reminder_at' => now()->addDay(),
+            ]);
+        }
+
+        $deletedLead->delete();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Active lead reminder')
+            ->assertDontSee('Deleted lead reminder');
+
+        $this->get(route('leads.reminders'))
+            ->assertOk()
+            ->assertSee('Active lead reminder')
+            ->assertDontSee('Deleted lead reminder');
+    }
+
     public function test_a_lead_can_be_converted_once_and_prefilled_into_a_quotation(): void
     {
         $user = User::factory()->create();

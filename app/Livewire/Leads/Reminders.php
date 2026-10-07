@@ -42,6 +42,7 @@ class Reminders extends Component
     {
         $reminders = LeadActivity::query()
             ->with('lead')
+            ->whereHas('lead')
             ->whereNotNull('reminder_at')
             ->whereNull('completed_at')
             ->orderBy('reminder_at')

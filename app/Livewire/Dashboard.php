@@ -27,8 +27,12 @@ class Dashboard extends Component
             'recentQuotes' => Quotation::with('client')->latest()->limit(8)->get(),
             'leadCount' => Lead::whereNotIn('status', ['won', 'lost'])->count(),
             'pipelineValue' => Lead::whereNotIn('status', ['won', 'lost'])->sum('estimated_value'),
-            'openReminderCount' => LeadActivity::whereNotNull('reminder_at')->whereNull('completed_at')->count(),
+            'openReminderCount' => LeadActivity::whereHas('lead')
+                ->whereNotNull('reminder_at')
+                ->whereNull('completed_at')
+                ->count(),
             'upcomingReminders' => LeadActivity::with('lead')
+                ->whereHas('lead')
                 ->whereNotNull('reminder_at')
                 ->whereNull('completed_at')
                 ->where('reminder_at', '<=', now()->addDays(7))
