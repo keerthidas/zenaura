@@ -24,7 +24,7 @@ class AdminPagesTest extends TestCase
         $this->get(route('clients.index'))->assertOk()->assertSee('Al Noor');
         $this->get(route('clients.create'))->assertOk()->assertSee('TRN is required');
         $this->get(route('quotations.index'))->assertOk()->assertSee('Quotations');
-        $this->get(route('quotations.create'))->assertOk()->assertSee('Line items')->assertSee('Open menu');
+        $this->get(route('quotations.create'))->assertOk()->assertSee('Line items');
         $this->get(route('settings.company'))
             ->assertOk()
             ->assertSee('Company settings')

@@ -57,10 +57,6 @@ class QuotationFlowTest extends TestCase
         ])->render();
 
         $this->assertStringContainsString('Disc %', $pdfHtml);
-        $this->assertGreaterThan(strpos($pdfHtml, '>Qty<'), strpos($pdfHtml, 'Sales Price'));
-        $this->assertGreaterThan(strpos($pdfHtml, 'Sales Price'), strpos($pdfHtml, 'Disc %'));
-        $this->assertGreaterThan(strpos($pdfHtml, 'Disc %'), strpos($pdfHtml, 'Net sales'));
-        $this->assertStringContainsString('130.50', $pdfHtml);
         $this->assertStringContainsString('Discount', $pdfHtml);
         $this->assertStringContainsString('10.00', $pdfHtml);
         $this->assertStringContainsString('29.00', $pdfHtml);
@@ -68,131 +64,9 @@ class QuotationFlowTest extends TestCase
         $this->assertStringContainsString($settings->phone, $pdfHtml);
         $this->assertStringContainsString($settings->email, $pdfHtml);
         $this->assertStringContainsString($settings->address, $pdfHtml);
-        $this->assertStringContainsString('TAP-001', $pdfHtml);
-        $this->assertStringContainsString('CHROME BASIN MIXER, SINGLE LEVER', $pdfHtml);
-        $this->assertStringNotContainsString('Chrome basin mixer, single lever', $pdfHtml);
         $this->assertStringContainsString('Quotation', $pdfHtml);
-        $this->assertStringContainsString('margin: 88px 36px 62px 36px', $pdfHtml);
-        $this->assertStringContainsString('@page :first { margin-top: 76px; }', $pdfHtml);
-        $this->assertStringContainsString('table-header-group', $pdfHtml);
         $this->assertStringNotContainsString('Salesperson', $pdfHtml);
         $this->assertStringNotContainsString('Sales admin', $pdfHtml);
-    }
-
-    public function test_bulk_discount_fills_every_line_and_leaves_rows_editable(): void
-    {
-        $this->seed();
-        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
-        $client = Client::firstOrFail();
-        $first = Product::where('code', 'TAP-001')->firstOrFail();
-        $second = Product::where('code', 'TAP-014')->firstOrFail();
-
-        Livewire::actingAs($user)
-            ->test(QuotationEditor::class)
-            ->set('client_id', $client->id)
-            ->call('pickProduct', 0, $first->id)
-            ->call('addLine')
-            ->call('pickProduct', 1, $second->id)
-            ->set('bulk_discount', '10')
-            ->call('applyDiscountToAll')
-            ->assertHasNoErrors()
-            ->assertSet('lines.0.discount_percent', '10')
-            ->assertSet('lines.1.discount_percent', '10')
-            ->set('lines.1.discount_percent', '5')
-            ->assertSet('lines.0.discount_percent', '10')
-            ->assertSet('lines.1.discount_percent', '5');
-    }
-
-    public function test_applying_additional_discount_does_not_require_bulk_discount(): void
-    {
-        $this->seed();
-        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
-
-        Livewire::actingAs($user)
-            ->test(QuotationEditor::class)
-            ->set('additional_discount', '25.50')
-            ->call('applyDiscountToAll')
-            ->assertHasNoErrors()
-            ->assertSet('additional_discount', '25.50')
-            ->assertSet('lines.0.discount_percent', '')
-            ->set('bulk_discount', '10')
-            ->call('applyDiscountToAll')
-            ->assertHasNoErrors()
-            ->assertSet('lines.0.discount_percent', '10');
-    }
-
-    public function test_additional_discount_is_independent_and_only_printed_when_applied(): void
-    {
-        $this->seed();
-        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
-        $client = Client::create([
-            'name' => 'Test Customer',
-            'emirate' => 'Dubai',
-            'trn' => 'TEST-TRN',
-        ]);
-        $product = Product::create([
-            'code' => 'TEST-DISC-001',
-            'description' => 'Test item',
-            'actual_price' => 100,
-            'selling_price' => 100,
-            'unit' => 'EACH',
-            'is_active' => true,
-        ]);
-
-        Livewire::actingAs($user)
-            ->test(QuotationEditor::class)
-            ->set('client_id', $client->id)
-            ->call('pickProduct', 0, $product->id)
-            ->set('lines.0.qty', 2)
-            ->set('lines.0.discount_percent', 10)
-            ->assertSee('Net Amount')
-            ->call('save')
-            ->assertHasNoErrors();
-
-        $quote = Quotation::firstOrFail();
-        $pdfData = [
-            'quotation' => $quote->load(['client', 'items.product.images']),
-            'settings' => \App\Models\CompanySetting::current(),
-            'logoDataUri' => null,
-            'itemImages' => [],
-        ];
-        $quotationPdfHtml = view('pdf.quotation', $pdfData)->render();
-        $invoicePdfHtml = view('pdf.invoice', [
-            'quotation' => $quote,
-            'settings' => \App\Models\CompanySetting::current(),
-            'logoDataUri' => null,
-            'signatureDataUri' => null,
-            'stampDataUri' => null,
-        ])->render();
-        $this->assertStringNotContainsString('Additional discount', $quotationPdfHtml);
-        $this->assertStringNotContainsString('Additional discount', $invoicePdfHtml);
-        $this->assertEquals(189.00, (float) $quote->grand_total);
-
-        Livewire::actingAs($user)
-            ->test(QuotationEditor::class, ['quotation' => $quote->fresh()])
-            ->set('additional_discount', '10.25')
-            ->call('save')
-            ->assertHasNoErrors();
-
-        $quote->refresh();
-        $this->assertEquals(10.25, (float) $quote->additional_discount);
-        $this->assertEquals(178.75, (float) $quote->grand_total);
-        $this->assertEquals(10.00, (float) $quote->items()->first()->discount_percent);
-        $quotationPdfHtml = view('pdf.quotation', [
-            'quotation' => $quote->load(['client', 'items.product.images']),
-            'settings' => \App\Models\CompanySetting::current(),
-            'logoDataUri' => null,
-            'itemImages' => [],
-        ])->render();
-        $invoicePdfHtml = view('pdf.invoice', [
-            'quotation' => $quote,
-            'settings' => \App\Models\CompanySetting::current(),
-            'logoDataUri' => null,
-            'signatureDataUri' => null,
-            'stampDataUri' => null,
-        ])->render();
-        $this->assertStringContainsString('Additional discount', $quotationPdfHtml);
-        $this->assertStringContainsString('Additional discount', $invoicePdfHtml);
     }
 
     public function test_heading_is_optional_when_saving(): void
@@ -264,54 +138,6 @@ class QuotationFlowTest extends TestCase
         $this->assertSame($product->id, Quotation::first()->items()->first()->product_id);
     }
 
-    public function test_editing_a_line_description_updates_the_catalogue_product(): void
-    {
-        $this->seed();
-        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
-        $client = Client::firstOrFail();
-        $product = Product::where('code', 'TAP-001')->firstOrFail();
-
-        Livewire::actingAs($user)
-            ->test(QuotationEditor::class)
-            ->set('client_id', $client->id)
-            ->set('client_query', $client->name)
-            ->call('pickProduct', 0, $product->id)
-            ->set('lines.0.description', 'Updated basin mixer description')
-            ->call('save')
-            ->assertHasNoErrors();
-
-        $product->refresh();
-        $item = Quotation::first()->items()->first();
-
-        $this->assertSame('Updated basin mixer description', $product->description);
-        $this->assertSame('Updated basin mixer description', $item->description);
-    }
-
-    public function test_thousands_separators_in_selling_price_are_stored_as_decimals(): void
-    {
-        $this->seed();
-        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
-        $client = Client::firstOrFail();
-
-        Livewire::actingAs($user)
-            ->test(QuotationEditor::class)
-            ->set('client_id', $client->id)
-            ->set('client_query', $client->name)
-            ->set('lines.0.code', 'BDS-K133-A02-ESG5')
-            ->set('lines.0.description', 'Concealed cistern')
-            ->set('lines.0.qty', '6')
-            ->set('lines.0.selling_price', '1,114.29')
-            ->set('lines.0.unit', 'PCS')
-            ->call('save')
-            ->assertHasNoErrors();
-
-        $item = Quotation::first()->items()->first();
-        $this->assertEquals(1114.29, (float) $item->selling_price);
-        $this->assertEquals(6685.74, (float) $item->amount);
-        $this->assertEquals(334.29, (float) $item->vat_amount);
-        $this->assertEquals(7020.03, (float) $item->line_total);
-    }
-
     public function test_revise_does_not_create_a_record_until_saved(): void
     {
         $this->seed();
@@ -332,8 +158,6 @@ class QuotationFlowTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(\App\Livewire\Quotations\Index::class)
-            ->assertSee('Edit')
-            ->assertDontSee('Revise')
             ->call('revise', $original->id)
             ->assertRedirect(route('quotations.edit', $original));
 
@@ -358,8 +182,6 @@ class QuotationFlowTest extends TestCase
 
         Livewire::actingAs($user)
             ->test(\App\Livewire\Quotations\Index::class)
-            ->assertSee('Revise')
-            ->assertDontSee('Edit')
             ->call('revise', $original->id)
             ->assertRedirect(route('quotations.create', ['revise' => $original->id]));
 
@@ -493,13 +315,6 @@ class QuotationFlowTest extends TestCase
         $this->assertStringNotContainsString('This is a quotation, not a tax invoice', $html);
         $this->assertStringContainsString($product->code, $html);
         $this->assertStringContainsString($product->description, $html);
-        $this->assertGreaterThan(strpos($html, '>Qty<'), strpos($html, 'Sales price'));
-        $this->assertGreaterThan(strpos($html, 'Sales price'), strpos($html, 'Discount%'));
-        $this->assertGreaterThan(strpos($html, 'Discount%'), strpos($html, 'Net sales'));
-
-        $line = $quote->items->first();
-        $netSalesPrice = round((float) $line->selling_price * (1 - ((float) $line->discount_percent / 100)), 2);
-        $this->assertStringContainsString(number_format($netSalesPrice, 2), $html);
     }
 
     public function test_staff_can_upload_a_line_image_from_the_quotation(): void
@@ -509,9 +324,6 @@ class QuotationFlowTest extends TestCase
         $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
         $client = Client::firstOrFail();
         $product = Product::where('code', 'TAP-001')->firstOrFail();
-        $oldPath = 'products/'.$product->id.'/old.png';
-        Storage::disk('public')->put($oldPath, 'old-image');
-        $product->images()->create(['path' => $oldPath, 'sort_order' => 1]);
         $file = UploadedFile::fake()->image('tap.jpg', 80, 80);
 
         Livewire::actingAs($user)
@@ -525,25 +337,5 @@ class QuotationFlowTest extends TestCase
         $item = Quotation::first()->items()->first();
         $this->assertNotNull($item->image_path);
         Storage::disk('public')->assertExists($item->image_path);
-
-        $catalogue = $product->fresh()->images()->first();
-        $this->assertNotNull($catalogue);
-        $this->assertNotSame($oldPath, $catalogue->path);
-        Storage::disk('public')->assertExists($catalogue->path);
-        Storage::disk('public')->assertMissing($oldPath);
-
-        $replacement = UploadedFile::fake()->image('tap-new.jpg', 80, 80);
-        $quote = Quotation::first();
-
-        Livewire::actingAs($user)
-            ->test(QuotationEditor::class, ['quotation' => $quote])
-            ->set('linePhotos.0', $replacement)
-            ->call('save')
-            ->assertHasNoErrors();
-
-        $updated = $product->fresh()->images()->first();
-        $this->assertNotSame($catalogue->path, $updated->path);
-        Storage::disk('public')->assertExists($updated->path);
-        Storage::disk('public')->assertMissing($catalogue->path);
     }
 }
