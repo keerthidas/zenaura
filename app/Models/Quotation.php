@@ -151,7 +151,7 @@ class Quotation extends Model
 
     public function netExclVat(): float
     {
-        return round((float) $this->subtotal - (float) $this->discount_total, 2);
+        return round((float) $this->subtotal - (float) $this->discount_total - (float) $this->additional_discount, 2);
     }
 
     /**

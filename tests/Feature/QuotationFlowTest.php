@@ -69,6 +69,30 @@ class QuotationFlowTest extends TestCase
         $this->assertStringNotContainsString('Sales admin', $pdfHtml);
     }
 
+    public function test_additional_discount_is_taken_before_vat(): void
+    {
+        $this->seed();
+        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
+        $client = Client::firstOrFail();
+        $product = Product::where('code', 'TAP-001')->firstOrFail();
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('client_id', $client->id)
+            ->call('pickProduct', 0, $product->id)
+            ->set('lines.0.qty', 2)
+            ->set('lines.0.discount_percent', 10)
+            ->set('additional_discount', '61')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $quote = Quotation::first();
+        $this->assertEquals(200.00, $quote->netExclVat());
+        $this->assertEquals(61.00, (float) $quote->additional_discount);
+        $this->assertEquals(10.00, (float) $quote->vat_total);
+        $this->assertEquals(210.00, (float) $quote->grand_total);
+    }
+
     public function test_heading_is_optional_when_saving(): void
     {
         $this->seed();
@@ -136,6 +160,34 @@ class QuotationFlowTest extends TestCase
         $this->assertSame('Basin mixer', $product->description);
         $this->assertEquals(52.00, (float) $product->selling_price);
         $this->assertSame($product->id, Quotation::first()->items()->first()->product_id);
+    }
+
+    public function test_saving_a_quotation_updates_the_catalogue_unit(): void
+    {
+        $user = User::factory()->create();
+        $client = Client::create([
+            'name' => 'Unit Client',
+            'trn' => '100000000000003',
+        ]);
+        $product = Product::create([
+            'code' => 'TAP-UNIT',
+            'description' => 'Basin mixer',
+            'actual_price' => 0,
+            'selling_price' => 100,
+            'unit' => 'PCS',
+            'is_active' => true,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('client_id', $client->id)
+            ->call('pickProduct', 0, $product->id)
+            ->set('lines.0.unit', 'SET')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('SET', $product->fresh()->unit);
+        $this->assertSame('SET', Quotation::first()->items()->first()->unit);
     }
 
     public function test_revise_does_not_create_a_record_until_saved(): void

@@ -97,4 +97,30 @@ class QuotationCalculator
             'grand_total' => round($grand, 2),
         ];
     }
+
+    /**
+     * Take a flat discount off the ex-VAT total, then scale VAT onto what remains.
+     *
+     * Line VAT rates stay in proportion. A zero additional discount leaves the
+     * original VAT and grand total unchanged.
+     *
+     * @param  array{subtotal: float, discount_total: float, vat_total: float, grand_total: float}  $totals
+     * @return array{subtotal: float, discount_total: float, vat_total: float, grand_total: float, additional_discount: float, taxable_amount: float}
+     */
+    public static function applyAdditionalDiscount(array $totals, mixed $additional): array
+    {
+        $additional = round(max(0, self::number($additional)), 2);
+        $excl = round($totals['subtotal'] - $totals['discount_total'], 2);
+        $taxable = round($excl - $additional, 2);
+        $vat = $excl > 0
+            ? round($totals['vat_total'] * ($taxable / $excl), 2)
+            : 0.0;
+
+        $totals['additional_discount'] = $additional;
+        $totals['taxable_amount'] = $taxable;
+        $totals['vat_total'] = $vat;
+        $totals['grand_total'] = round($taxable + $vat, 2);
+
+        return $totals;
+    }
 }

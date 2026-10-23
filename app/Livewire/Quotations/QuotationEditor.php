@@ -435,6 +435,8 @@ class QuotationEditor extends Component
     public function save(QuotationNumberService $numbers, InvoiceNumberService $invoices)
     {
         $items = $this->preparedLines();
+        $lineTotals = QuotationCalculator::totals($items);
+        $exclVat = round($lineTotals['subtotal'] - $lineTotals['discount_total'], 2);
 
         if (! $this->quotation?->exists && $this->revisingFromId) {
             $this->number = $numbers->revisionOf(
@@ -469,7 +471,7 @@ class QuotationEditor extends Component
                     'nullable',
                     'numeric',
                     'min:0',
-                    'max:'.QuotationCalculator::totals($items)['grand_total'],
+                    'max:'.max(0, $exclVat),
                 ],
                 'linePhotos.*' => ['nullable', 'image', 'max:4096'],
             ], [
@@ -496,9 +498,7 @@ class QuotationEditor extends Component
             }
         }
 
-        $totals = QuotationCalculator::totals($items);
-        $totals['additional_discount'] = round(QuotationCalculator::number($this->additional_discount), 2);
-        $totals['grand_total'] = round($totals['grand_total'] - $totals['additional_discount'], 2);
+        $totals = QuotationCalculator::applyAdditionalDiscount($lineTotals, $this->additional_discount);
         $meta = $numbers->resolveForSave($this->number, \Illuminate\Support\Carbon::parse($this->quote_date));
 
         $quotation = DB::transaction(function () use ($meta, $totals, $items, $invoices) {
@@ -582,11 +582,10 @@ class QuotationEditor extends Component
     #[Computed]
     public function totals(): array
     {
-        $totals = QuotationCalculator::totals($this->preparedLines());
-        $totals['additional_discount'] = round(QuotationCalculator::number($this->additional_discount), 2);
-        $totals['grand_total'] = round($totals['grand_total'] - $totals['additional_discount'], 2);
-
-        return $totals;
+        return QuotationCalculator::applyAdditionalDiscount(
+            QuotationCalculator::totals($this->preparedLines()),
+            $this->additional_discount,
+        );
     }
 
     /**
@@ -623,9 +622,19 @@ class QuotationEditor extends Component
                 $product->restore();
             }
 
+            $changes = [];
             $description = trim((string) ($line['description'] ?? ''));
             if ($description !== '' && $product->description !== $description) {
-                $product->update(['description' => $description]);
+                $changes['description'] = $description;
+            }
+
+            $unit = trim((string) ($line['unit'] ?? '')) ?: 'EACH';
+            if (strcasecmp((string) $product->unit, $unit) !== 0) {
+                $changes['unit'] = $unit;
+            }
+
+            if ($changes !== []) {
+                $product->update($changes);
             }
 
             return $product;
