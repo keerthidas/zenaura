@@ -18,7 +18,7 @@ class QuotationPdfController extends Controller
         $itemImages = [];
 
         foreach ($quotation->items as $item) {
-            $path = $item->image_path ?: $item->product?->images->first()?->path;
+            $path = $item->product?->images->first()?->path;
             if ($path) {
                 $itemImages[$item->id] = pdf_data_uri($path);
             }

@@ -308,11 +308,8 @@ class QuotationEditor extends Component
         $term = trim((string) $this->lines[$index]['code']);
 
         if ($term === '') {
+            $this->clearLineImage($index);
             $this->lines[$index]['product_id'] = null;
-            if (! $this->hasCustomLineImage($index)) {
-                $this->lines[$index]['image'] = null;
-                $this->lines[$index]['image_path'] = null;
-            }
             unset($this->suggestions[$index]);
 
             return;
@@ -330,8 +327,11 @@ class QuotationEditor extends Component
             return;
         }
 
+        $previousId = $this->lines[$index]['product_id'] ?? null;
         $this->lines[$index]['product_id'] = null;
-        if (! $this->hasCustomLineImage($index)) {
+        if ($previousId) {
+            $this->clearLineImage($index);
+        } elseif (empty($this->linePhotos[$index])) {
             $this->lines[$index]['image'] = null;
             $this->lines[$index]['image_path'] = null;
         }
@@ -544,7 +544,7 @@ class QuotationEditor extends Component
 
                 $line = QuotationCalculator::line($raw);
                 $product = $this->ensureCatalogueProduct($line);
-                $imagePath = $this->persistLineImage($quotation, $product, (int) $index, $line['image_path'] ?? null);
+                $imagePath = $this->persistLineImage($product, (int) $index);
 
                 $quotation->items()->create([
                     'product_id' => $product->id,
@@ -652,12 +652,19 @@ class QuotationEditor extends Component
 
     protected function applyProduct(int $index, Product $product): void
     {
+        $previousId = $this->lines[$index]['product_id'] ?? null;
+        $changed = (string) $previousId !== (string) $product->id;
+
         $this->lines[$index]['product_id'] = $product->id;
         $this->lines[$index]['code'] = $product->code;
         $this->lines[$index]['description'] = $product->description;
         $this->lines[$index]['unit'] = strtoupper($product->unit ?: 'EACH');
         $this->lines[$index]['selling_price'] = (string) $product->selling_price;
-        if (! $this->hasCustomLineImage($index)) {
+        if ($changed) {
+            unset($this->linePhotos[$index]);
+        }
+
+        if ($changed || empty($this->linePhotos[$index])) {
             $product->loadMissing('images');
             $this->lines[$index]['image'] = $product->images->first()?->url();
             $this->lines[$index]['image_path'] = null;
@@ -727,18 +734,15 @@ class QuotationEditor extends Component
         $this->lines[$index]['image'] = $this->linePhotos[$index]->temporaryUrl();
     }
 
-    protected function hasCustomLineImage(int $index): bool
+    protected function clearLineImage(int $index): void
     {
-        return ! empty($this->lines[$index]['image_path'] ?? null)
-            || ! empty($this->linePhotos[$index]);
+        unset($this->linePhotos[$index]);
+        $this->lines[$index]['image'] = null;
+        $this->lines[$index]['image_path'] = null;
     }
 
     protected function lineImageUrl(\App\Models\QuotationItem $item): ?string
     {
-        if ($item->image_path) {
-            return public_media_url($item->image_path);
-        }
-
         return $item->product?->images->first()?->url();
     }
 
@@ -752,55 +756,32 @@ class QuotationEditor extends Component
         $this->linePhotos = $current;
     }
 
-    protected function persistLineImage(Quotation $quotation, Product $product, int $index, ?string $existing): ?string
+    protected function persistLineImage(Product $product, int $index): ?string
     {
         $photo = $this->linePhotos[$index] ?? null;
-        $path = $existing ?: null;
-
-        if ($photo) {
-            $path = $photo->store('quotation-items/'.$quotation->id, 'public');
-            $this->syncCatalogueImage($product, $path, replace: true);
-        } elseif ($path && $product->images()->doesntExist()) {
-            $this->syncCatalogueImage($product, $path, replace: false);
+        if (! $photo) {
+            return null;
         }
 
-        return $path ?: null;
-    }
-
-    protected function syncCatalogueImage(Product $product, string $sourcePath, bool $replace): void
-    {
-        $disk = Storage::disk('public');
-        if (! $disk->exists($sourcePath)) {
-            return;
-        }
-
-        $extension = pathinfo($sourcePath, PATHINFO_EXTENSION) ?: 'jpg';
-        $dest = 'products/'.$product->id.'/catalog-'.uniqid('', true).'.'.$extension;
-        $disk->copy($sourcePath, $dest);
-
+        $path = $photo->store('products/'.$product->id, 'public');
         $image = $product->images()->orderBy('sort_order')->first();
 
-        if ($image && $replace) {
+        if ($image) {
             $old = $image->path;
-            $image->update(['path' => $dest]);
-            if (
-                $old
-                && $old !== $dest
-                && $old !== $sourcePath
-                && str_starts_with($old, 'products/'.$product->id.'/')
-            ) {
-                $disk->delete($old);
+            $image->update(['path' => $path]);
+            if ($old && $old !== $path && str_starts_with($old, 'products/'.$product->id.'/')) {
+                Storage::disk('public')->delete($old);
             }
 
-            return;
+            return null;
         }
 
-        if (! $image) {
-            $product->images()->create([
-                'path' => $dest,
-                'sort_order' => 1,
-            ]);
-        }
+        $product->images()->create([
+            'path' => $path,
+            'sort_order' => 1,
+        ]);
+
+        return null;
     }
 
     public function render()

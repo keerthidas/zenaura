@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\Quotations\QuotationEditor;
 use App\Models\Client;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Quotation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -371,11 +372,20 @@ class QuotationFlowTest extends TestCase
 
     public function test_staff_can_upload_a_line_image_from_the_quotation(): void
     {
-        $this->seed();
         Storage::fake('public');
-        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
-        $client = Client::firstOrFail();
-        $product = Product::where('code', 'TAP-001')->firstOrFail();
+        $user = User::factory()->create();
+        $client = Client::create([
+            'name' => 'Image Client',
+            'trn' => '100000000000003',
+        ]);
+        $product = Product::create([
+            'code' => 'TAP-IMG',
+            'description' => 'Basin mixer',
+            'actual_price' => 0,
+            'selling_price' => 100,
+            'unit' => 'PCS',
+            'is_active' => true,
+        ]);
         $file = UploadedFile::fake()->image('tap.jpg', 80, 80);
 
         Livewire::actingAs($user)
@@ -387,7 +397,47 @@ class QuotationFlowTest extends TestCase
             ->assertHasNoErrors();
 
         $item = Quotation::first()->items()->first();
-        $this->assertNotNull($item->image_path);
-        Storage::disk('public')->assertExists($item->image_path);
+        $image = $product->fresh()->images()->first();
+        $this->assertNull($item->image_path);
+        $this->assertNotNull($image);
+        Storage::disk('public')->assertExists($image->path);
+    }
+
+    public function test_changing_the_line_product_shows_that_products_photo(): void
+    {
+        $user = User::factory()->create();
+        $client = Client::create([
+            'name' => 'Image Client',
+            'trn' => '100000000000003',
+        ]);
+        $first = Product::create([
+            'code' => 'TAP-A',
+            'description' => 'Chrome tap',
+            'actual_price' => 0,
+            'selling_price' => 100,
+            'unit' => 'PCS',
+            'is_active' => true,
+        ]);
+        $second = Product::create([
+            'code' => 'TAP-B',
+            'description' => 'Basin',
+            'actual_price' => 0,
+            'selling_price' => 80,
+            'unit' => 'PCS',
+            'is_active' => true,
+        ]);
+        ProductImage::create(['product_id' => $first->id, 'path' => 'products/a.jpg', 'sort_order' => 1]);
+        ProductImage::create(['product_id' => $second->id, 'path' => 'products/b.jpg', 'sort_order' => 1]);
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('client_id', $client->id)
+            ->call('pickProduct', 0, $first->id)
+            ->assertSet('lines.0.image', $first->fresh()->images->first()->url())
+            ->set('linePhotos.0', UploadedFile::fake()->image('new.jpg'))
+            ->call('pickProduct', 0, $second->id)
+            ->assertSet('lines.0.code', 'TAP-B')
+            ->assertSet('lines.0.image', $second->fresh()->images->first()->url())
+            ->assertSet('linePhotos', []);
     }
 }
