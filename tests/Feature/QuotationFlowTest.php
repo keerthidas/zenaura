@@ -70,6 +70,80 @@ class QuotationFlowTest extends TestCase
         $this->assertStringNotContainsString('Sales admin', $pdfHtml);
     }
 
+    public function test_quotation_pdf_can_hide_the_discount_while_keeping_the_discounted_price(): void
+    {
+        $this->seed();
+        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
+        $client = Client::create(['name' => 'Al Noor Contracting', 'trn' => '100000000000003', 'emirate' => 'Dubai']);
+        $product = Product::create([
+            'code' => 'TAP-HIDE',
+            'description' => 'Basin mixer chrome',
+            'actual_price' => 100,
+            'selling_price' => 145,
+            'unit' => 'pcs',
+            'is_active' => true,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('client_id', $client->id)
+            ->set('client_query', $client->name)
+            ->call('pickProduct', 0, $product->id)
+            ->set('lines.0.qty', 2)
+            ->set('lines.0.discount_percent', 10)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $quote = Quotation::with(['client', 'items'])->firstOrFail();
+        $settings = \App\Models\CompanySetting::current();
+        $viewData = [
+            'quotation' => $quote,
+            'settings' => $settings,
+            'logoDataUri' => null,
+            'itemImages' => [],
+        ];
+
+        $shown = view('pdf.quotation', $viewData)->render();
+        $hidden = view('pdf.quotation', $viewData + ['hideDiscount' => true])->render();
+
+        $this->assertStringContainsString('Disc %', $shown);
+        $this->assertStringContainsString('145.00', $shown);
+        $this->assertStringContainsString('10.00', $shown);
+        $this->assertStringContainsString('29.00', $shown);
+        $this->assertStringContainsString('290.00', $shown);
+
+        $this->assertStringNotContainsString('Disc %', $hidden);
+        $this->assertStringNotContainsString('Net sales', $hidden);
+        $this->assertStringNotContainsString('>Discount<', $hidden);
+        $this->assertStringNotContainsString('145.00', $hidden);
+        $this->assertStringNotContainsString('290.00', $hidden);
+        $this->assertStringNotContainsString('29.00', $hidden);
+        $this->assertStringContainsString('130.50', $hidden);
+        $this->assertStringContainsString('261.00', $hidden);
+        $this->assertStringContainsString('274.05', $hidden);
+
+        $this->actingAs($user)
+            ->get(route('quotations.pdf', $quote))
+            ->assertOk();
+        $this->actingAs($user)
+            ->get(route('quotations.pdf', ['quotation' => $quote, 'discount' => 'hide']))
+            ->assertOk();
+
+        $this->withoutVite()->actingAs($user)
+            ->get(route('quotations.edit', $quote))
+            ->assertOk()
+            ->assertSee('Open PDF')
+            ->assertSee('open-quotation-pdf', false)
+            ->assertSee('Hide discount')
+            ->assertSee('With discount');
+
+        $this->withoutVite()->actingAs($user)
+            ->get(route('quotations.index'))
+            ->assertOk()
+            ->assertSee('Quotation PDF')
+            ->assertSee('open-quotation-pdf', false);
+    }
+
     public function test_additional_discount_is_taken_before_vat(): void
     {
         $this->seed();

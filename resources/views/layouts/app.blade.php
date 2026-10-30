@@ -15,6 +15,7 @@
         x-data="{
             collapsed: {{ request()->routeIs('quotations.create', 'quotations.edit') ? 'true' : 'false' }},
             wasQuoteEditor: {{ request()->routeIs('quotations.create', 'quotations.edit') ? 'true' : 'false' }},
+            pdfUrl: null,
             isQuoteEditor() {
                 const path = window.location.pathname.replace(/\/+$/, '');
                 return /\/quotations\/create$/.test(path) || /\/quotations\/[^/]+\/edit$/.test(path);
@@ -32,9 +33,18 @@
                 this.collapsed = ! this.collapsed;
                 localStorage.setItem('zenaura.sidebarCollapsed', this.collapsed ? '1' : '0');
             },
+            openQuotationPdf(hide) {
+                const base = this.pdfUrl;
+                if (! base) return;
+                const url = hide ? base + (base.includes('?') ? '&' : '?') + 'discount=hide' : base;
+                this.pdfUrl = null;
+                window.open(url, '_blank', 'noopener');
+            },
         }"
         x-init="applyRoute()"
-        x-on:livewire:navigated.window="applyRoute()"
+        x-on:livewire:navigated.window="applyRoute(); pdfUrl = null"
+        x-on:open-quotation-pdf.window="pdfUrl = $event.detail.url"
+        x-on:keydown.escape.window="pdfUrl = null"
     >
         <aside
             class="hidden w-64 shrink-0 flex-col bg-zenora-dark text-sand lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto {{ request()->routeIs('quotations.create', 'quotations.edit') ? '' : 'lg:flex' }}"
@@ -119,6 +129,27 @@
             <main class="flex-1 p-4 lg:p-8">
                 {{ $slot }}
             </main>
+        </div>
+
+        <div
+            x-cloak
+            x-show="pdfUrl"
+            x-transition.opacity
+            x-on:click.self="pdfUrl = null"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quotation-pdf-choice-title"
+        >
+            <div class="card w-full max-w-md p-6">
+                <h2 id="quotation-pdf-choice-title" class="font-display text-2xl">Open quotation PDF</h2>
+                <p class="mt-2 text-sm text-stone-600">With discount keeps the discount column. Hide discount leaves it off and prints each sales price after the discount is already applied.</p>
+                <div class="mt-5 flex flex-wrap justify-end gap-2">
+                    <button type="button" class="btn btn-ghost" x-on:click="pdfUrl = null">Cancel</button>
+                    <button type="button" class="btn btn-ghost" x-on:click="openQuotationPdf(true)">Hide discount</button>
+                    <button type="button" class="btn btn-primary" x-on:click="openQuotationPdf(false)">With discount</button>
+                </div>
+            </div>
         </div>
     </div>
     <livewire:toast />

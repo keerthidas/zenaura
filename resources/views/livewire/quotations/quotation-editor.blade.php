@@ -42,7 +42,7 @@
                 </select>
             </div>
             @if ($quotation?->exists)
-                <a href="{{ route('quotations.pdf', $quotation) }}" target="_blank" class="btn btn-ghost">Open PDF</a>
+                <button type="button" x-on:click="$dispatch('open-quotation-pdf', { url: @js(route('quotations.pdf', $quotation)) })" class="btn btn-ghost">Open PDF</button>
                 @if ($quotation->isAccepted())
                     <a href="{{ route('quotations.invoice', $quotation) }}" target="_blank" class="btn btn-ghost">Open invoice</a>
                 @endif

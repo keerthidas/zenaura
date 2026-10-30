@@ -109,7 +109,7 @@
                                     <template x-teleport="body">
                                     <div x-ref="menu" x-cloak x-show="open" x-transition.origin.top.right x-on:click.outside="open = false" :style="`position:fixed;top:${top}px;right:${right}px`" role="menu"
                                         class="z-[100] max-h-[70vh] w-48 overflow-y-auto rounded-lg border border-stone-200 bg-white py-1 text-left shadow-lg">
-                                        <a role="menuitem" href="{{ route('quotations.pdf', $quote) }}" target="_blank" x-on:click="open = false" class="block px-3 py-2 text-sm text-ink hover:bg-sand">Quotation PDF</a>
+                                        <button type="button" role="menuitem" x-on:click="open = false; $dispatch('open-quotation-pdf', { url: @js(route('quotations.pdf', $quote)) })" class="block w-full px-3 py-2 text-left text-sm text-ink hover:bg-sand">Quotation PDF</button>
                                         <button type="button" role="menuitem" wire:click="openProforma({{ $quote->id }})" x-on:click="open = false"
                                             wire:loading.attr="disabled" wire:target="openProforma({{ $quote->id }})" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-sand disabled:opacity-55">
                                             <x-spinner class="h-3 w-3" wire:loading wire:target="openProforma({{ $quote->id }})" /> Proforma

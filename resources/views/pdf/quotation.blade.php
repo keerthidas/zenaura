@@ -115,41 +115,48 @@
         </tr>
     </table>
 
+    @php
+        $hideDiscount = (bool) ($hideDiscount ?? false);
+        $columns = $hideDiscount ? 9 : 11;
+    @endphp
     <table class="items">
         <thead>
             <tr>
                 <th width="7%"></th>
                 <th width="11%">Article</th>
                 <th>Description</th>
-                <th width="5%">Unit</th>
-                <th width="5%" class="right">Qty</th>
-                <th width="9%" class="right">Sales Price</th>
-                <th width="6%" class="right">Disc %</th>
-                <th width="9%" class="right">Net sales<br>price</th>
-                <th width="10%" class="right">Value (Ex. VAT)</th>
-                <th width="8%" class="right">VAT Value</th>
-                <th width="10%" class="right">Value (Inc. VAT)</th>
+                <th width="{{ $hideDiscount ? '6%' : '5%' }}">Unit</th>
+                <th width="{{ $hideDiscount ? '6%' : '5%' }}" class="right">Qty</th>
+                <th width="{{ $hideDiscount ? '12%' : '9%' }}" class="right">Sales Price</th>
+                @unless ($hideDiscount)
+                    <th width="6%" class="right">Disc %</th>
+                    <th width="9%" class="right">Net sales<br>price</th>
+                @endunless
+                <th width="{{ $hideDiscount ? '13%' : '10%' }}" class="right">Value (Ex. VAT)</th>
+                <th width="{{ $hideDiscount ? '10%' : '8%' }}" class="right">VAT Value</th>
+                <th width="{{ $hideDiscount ? '13%' : '10%' }}" class="right">Value (Inc. VAT)</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($quotation->groupedForPdf() as $group)
                 @if ($group['heading'] !== '')
                     <tr class="heading">
-                        <td colspan="10">{{ strtoupper($group['heading']) }}</td>
+                        <td colspan="{{ $columns - 1 }}">{{ strtoupper($group['heading']) }}</td>
                         <td class="right">{{ number_format($group['total'], 2) }}</td>
                     </tr>
                 @endif
                 @foreach ($group['subs'] as $sub)
                     @if ($sub['title'] !== '')
                         <tr class="subhead">
-                            <td colspan="11">{{ strtoupper($sub['title']) }}</td>
+                            <td colspan="{{ $columns }}">{{ strtoupper($sub['title']) }}</td>
                         </tr>
                     @endif
                     @foreach ($sub['items'] as $item)
                         @php
-                            $net = round(((float) $item->amount) * (1 - ((float) $item->discount_percent / 100)), 2);
                             $discountPercent = (float) $item->discount_percent;
                             $netSalesPrice = round((float) $item->selling_price * (1 - ($discountPercent / 100)), 2);
+                            $salesPrice = $hideDiscount ? $netSalesPrice : (float) $item->selling_price;
+                            $net = round(((float) $item->amount) * (1 - ($discountPercent / 100)), 2);
                             $itemImage = $itemImages[$item->id] ?? null;
                         @endphp
                         <tr>
@@ -162,9 +169,11 @@
                             <td>{{ mb_strtoupper((string) $item->description) }}</td>
                             <td>{{ strtoupper($item->unit) }}</td>
                             <td class="right">{{ rtrim(rtrim(number_format((float) $item->qty, 3, '.', ''), '0'), '.') }}</td>
-                            <td class="right">{{ number_format((float) $item->selling_price, 2) }}</td>
-                            <td class="right">{{ $discountPercent > 0 ? number_format($discountPercent, 2) : '—' }}</td>
-                            <td class="right">{{ number_format($netSalesPrice, 2) }}</td>
+                            <td class="right">{{ number_format($salesPrice, 2) }}</td>
+                            @unless ($hideDiscount)
+                                <td class="right">{{ $discountPercent > 0 ? number_format($discountPercent, 2) : '—' }}</td>
+                                <td class="right">{{ number_format($netSalesPrice, 2) }}</td>
+                            @endunless
                             <td class="right">{{ number_format($net, 2) }}</td>
                             <td class="right">{{ number_format((float) $item->vat_amount, 2) }}</td>
                             <td class="right">{{ number_format((float) $item->line_total, 2) }}</td>
@@ -176,17 +185,24 @@
     </table>
 
     <br>
+    @php
+        $gross = $hideDiscount
+            ? round((float) $quotation->subtotal - (float) $quotation->discount_total, 2)
+            : (float) $quotation->subtotal;
+    @endphp
     <table class="totals">
         <tr>
             <td width="58%"></td>
             <td width="24%" class="muted">Gross amount</td>
-            <td width="18%" class="right">AED {{ number_format((float) $quotation->subtotal, 2) }}</td>
+            <td width="18%" class="right">AED {{ number_format($gross, 2) }}</td>
         </tr>
-        <tr>
-            <td></td>
-            <td class="muted">Discount</td>
-            <td class="right">AED {{ number_format((float) $quotation->discount_total, 2) }}</td>
-        </tr>
+        @unless ($hideDiscount)
+            <tr>
+                <td></td>
+                <td class="muted">Discount</td>
+                <td class="right">AED {{ number_format((float) $quotation->discount_total, 2) }}</td>
+            </tr>
+        @endunless
         <tr>
             <td></td>
             <td class="muted">Total amount (Excl. VAT)</td>

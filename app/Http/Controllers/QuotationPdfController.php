@@ -6,11 +6,12 @@ use App\Models\CompanySetting;
 use App\Models\Quotation;
 use App\Support\QuotationPdfMerger;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class QuotationPdfController extends Controller
 {
-    public function __invoke(Quotation $quotation): Response
+    public function __invoke(Request $request, Quotation $quotation): Response
     {
         $quotation->load(['client', 'items.product.images']);
         $settings = CompanySetting::current();
@@ -29,6 +30,7 @@ class QuotationPdfController extends Controller
             'settings' => $settings,
             'logoDataUri' => $logoDataUri,
             'itemImages' => $itemImages,
+            'hideDiscount' => $request->query('discount') === 'hide',
         ])->setPaper('a4', 'portrait');
 
         $filename = str_replace(['/', '\\'], '-', $quotation->number).'.pdf';
