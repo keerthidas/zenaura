@@ -681,16 +681,19 @@ class QuotationEditor extends Component
         $this->lines[$index]['selling_price'] = (string) $product->selling_price;
         if ($changed) {
             unset($this->linePhotos[$index]);
-            $key = $this->lines[$index]['line_key'] ?? null;
-            if ($key) {
-                $this->dispatch('line-photo-reset', key: $key);
-            }
         }
 
         if ($changed || empty($this->linePhotos[$index])) {
             $product->loadMissing('images');
             $this->lines[$index]['image'] = $product->images->first()?->url();
             $this->lines[$index]['image_path'] = null;
+        }
+
+        if ($changed) {
+            $key = $this->lines[$index]['line_key'] ?? null;
+            if ($key) {
+                $this->dispatch('line-photo-reset', key: $key, url: $this->lines[$index]['image']);
+            }
         }
         $this->lines[$index] = QuotationCalculator::line($this->lines[$index]);
     }
@@ -766,7 +769,7 @@ class QuotationEditor extends Component
         $this->lines[$index]['image'] = null;
         $this->lines[$index]['image_path'] = null;
         if ($key) {
-            $this->dispatch('line-photo-reset', key: $key);
+            $this->dispatch('line-photo-reset', key: $key, url: null);
         }
     }
 

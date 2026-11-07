@@ -154,11 +154,46 @@
         </div>
     </div>
 
+    <style>
+        .line-photo {
+            position: relative !important;
+            display: flex;
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            flex: 0 0 2.5rem;
+            overflow: hidden !important;
+        }
+        .line-photo [data-line-preview] {
+            position: absolute !important;
+            inset: 0 !important;
+            z-index: 1;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            object-fit: cover;
+        }
+        .line-photo .line-photo-status {
+            position: absolute !important;
+            inset: 0 !important;
+            z-index: 2;
+        }
+        .line-photo [data-line-photo] {
+            position: absolute !important;
+            inset: 0 !important;
+            z-index: 3;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0;
+            cursor: pointer;
+            opacity: 0;
+        }
+    </style>
     <script>
         if (! window.ZenauraLinePhotos) {
             const urls = new Map();
 
-            const previewImage = (key) => document.querySelector(`[data-line-preview="${CSS.escape(key)}"]`);
+            const previewByKey = (key) => [...document.querySelectorAll('[data-line-preview]')]
+                .find((img) => img.getAttribute('data-line-preview') === key) ?? null;
 
             const release = (key) => {
                 const url = urls.get(key);
@@ -166,6 +201,12 @@
                 if (url && ! [...urls.values()].includes(url)) {
                     URL.revokeObjectURL(url);
                 }
+            };
+
+            const setPlaceholder = (img, visible) => {
+                const placeholder = img.closest('label')?.querySelector('[data-line-placeholder]');
+                if (! placeholder) return;
+                placeholder.classList.toggle('hidden', ! visible);
             };
 
             window.ZenauraLinePhotos = {
@@ -178,22 +219,31 @@
                     urls.set(key, url);
                     img.src = url;
                     img.classList.remove('hidden');
+                    setPlaceholder(img, false);
                 },
-                hide(key) {
+                hide(key, url = '') {
                     release(key);
-                    const img = previewImage(key);
+                    const img = previewByKey(key);
                     if (! img) return;
+                    if (url) {
+                        img.src = url;
+                        img.classList.remove('hidden');
+                        setPlaceholder(img, false);
+                        return;
+                    }
                     img.removeAttribute('src');
                     img.classList.add('hidden');
+                    setPlaceholder(img, true);
                 },
                 copy(from, to) {
                     const url = urls.get(from);
                     if (! url) return;
                     urls.set(to, url);
-                    const img = previewImage(to);
+                    const img = previewByKey(to);
                     if (! img) return;
                     img.src = url;
                     img.classList.remove('hidden');
+                    setPlaceholder(img, false);
                 },
             };
 
@@ -204,17 +254,19 @@
                 if (file) window.ZenauraLinePhotos.show(input, file);
             });
 
-            let lastLineKey = null;
+            let lastLineIndex = null;
 
-            const lineKeyFrom = (node) => {
-                const row = node?.closest?.('tr');
-                return row?.querySelector('[data-line-preview]')?.getAttribute('data-line-preview') || null;
+            const rowFrom = (node) => node?.closest?.('tr[data-line-index]') ?? null;
+
+            const rowByIndex = (index) => {
+                if (index === null || index === undefined || index === '') return null;
+                return [...document.querySelectorAll('tr[data-line-index]')]
+                    .find((row) => row.getAttribute('data-line-index') === String(index)) ?? null;
             };
 
-            const photoInputFor = (key) => {
-                if (! key) return null;
-                const img = previewImage(key);
-                return img?.closest('label')?.querySelector('[data-line-photo]') ?? null;
+            const rememberRow = (node) => {
+                const index = rowFrom(node)?.getAttribute('data-line-index');
+                if (index !== null && index !== undefined && index !== '') lastLineIndex = index;
             };
 
             const imageFromClipboard = (data) => {
@@ -230,20 +282,23 @@
                 return null;
             };
 
-            document.addEventListener('focusin', (event) => {
-                const key = lineKeyFrom(event.target);
-                if (key) lastLineKey = key;
-            });
-            document.addEventListener('pointerdown', (event) => {
-                const key = lineKeyFrom(event.target);
-                if (key) lastLineKey = key;
-            }, true);
+            document.addEventListener('focusin', (event) => rememberRow(event.target));
+            document.addEventListener('pointerdown', (event) => rememberRow(event.target), true);
             document.addEventListener('paste', (event) => {
                 const file = imageFromClipboard(event.clipboardData);
                 if (! file) return;
-                const input = photoInputFor(lineKeyFrom(event.target)) || photoInputFor(lastLineKey);
+                const row = rowFrom(event.target) || rowByIndex(lastLineIndex);
+                const input = row?.querySelector('[data-line-photo]');
                 if (! input) return;
                 event.preventDefault();
+                window.ZenauraLinePhotos.show(input, file);
+                const property = input.getAttribute('wire:model');
+                const wireId = input.closest('[wire\\:id]')?.getAttribute('wire:id');
+                const wire = wireId ? window.Livewire?.find(wireId) : null;
+                if (property && wire && typeof wire.upload === 'function') {
+                    wire.upload(property, file);
+                    return;
+                }
                 const transfer = new DataTransfer();
                 transfer.items.add(file);
                 input.files = transfer.files;
@@ -251,7 +306,7 @@
             });
             document.addEventListener('line-photo-reset', (event) => {
                 const key = event.detail?.key;
-                if (key) window.ZenauraLinePhotos.hide(key);
+                if (key) window.ZenauraLinePhotos.hide(key, event.detail?.url || '');
             });
             document.addEventListener('line-photo-copy', (event) => {
                 if (event.detail?.from && event.detail?.to) {
@@ -303,21 +358,17 @@
                                 <td colspan="4" class="px-3 py-2 text-right text-[10px] uppercase tracking-wide text-teal-100">Section heading</td>
                             </tr>
                         @endif
-                        <tr class="border-b border-stone-200 bg-white align-top hover:bg-sand/40" wire:key="line-{{ $item['line_key'] }}">
+                        <tr class="border-b border-stone-200 bg-white align-top hover:bg-sand/40" wire:key="line-{{ $item['line_key'] }}" data-line-index="{{ $i }}">
                             <td class="px-2 py-1.5">
-                                <label class="relative flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded bg-sand" title="Choose a file, or click this row and press Ctrl+V to paste a snip">
-                                    <span wire:ignore class="pointer-events-none absolute inset-0 z-10">
-                                        <img data-line-preview="{{ $item['line_key'] }}" alt="" class="hidden h-full w-full object-cover">
-                                    </span>
-                                    @if (! empty($item['image']))
-                                        <img src="{{ $item['image'] }}" alt="" class="h-10 w-10 object-cover">
-                                    @else
-                                        <span class="text-[9px] text-stone-400">Add</span>
+                                <label class="line-photo cursor-pointer items-center justify-center rounded bg-sand" title="Choose a file, or click this row and press Ctrl+V to paste a snip">
+                                    <img wire:ignore data-line-preview="{{ $item['line_key'] }}" alt="" @if (! empty($item['image'])) src="{{ $item['image'] }}" @else class="hidden" @endif>
+                                    @if (empty($item['image']))
+                                        <span data-line-placeholder class="text-[9px] text-stone-400">Add</span>
                                     @endif
-                                    <span wire:loading wire:target="linePhotos.{{ $i }}" class="absolute inset-0 z-20 flex items-center justify-center bg-white/70 text-zenora">
+                                    <span wire:loading wire:target="linePhotos.{{ $i }}" class="line-photo-status flex items-center justify-center bg-white/70 text-zenora">
                                         <x-spinner class="h-4 w-4" />
                                     </span>
-                                    <input type="file" accept="image/*" data-line-photo class="absolute inset-0 z-30 cursor-pointer opacity-0" wire:model="linePhotos.{{ $i }}">
+                                    <input type="file" accept="image/*" data-line-photo wire:model="linePhotos.{{ $i }}">
                                 </label>
                                 @error('linePhotos.'.$i)
                                     <p class="mt-0.5 max-w-[4.5rem] text-[9px] leading-tight text-red-600">{{ $message }}</p>
