@@ -49,10 +49,10 @@ class QuotationPdfMerger
 
             if ($addWebsiteLink) {
                 $merged->Link(
-                    $size['width'] * 0.30,
-                    $size['height'] * 0.965,
-                    $size['width'] * 0.40,
-                    $size['height'] * 0.026,
+                    $size['width'] * 0.43,
+                    $size['height'] * 0.935,
+                    $size['width'] * 0.21,
+                    $size['height'] * 0.025,
                     'https://www.zenaurasanitary.com/',
                 );
             }

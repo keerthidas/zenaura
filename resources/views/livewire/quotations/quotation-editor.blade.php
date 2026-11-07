@@ -154,12 +154,123 @@
         </div>
     </div>
 
+    <script>
+        if (! window.ZenauraLinePhotos) {
+            const urls = new Map();
+
+            const previewImage = (key) => document.querySelector(`[data-line-preview="${CSS.escape(key)}"]`);
+
+            const release = (key) => {
+                const url = urls.get(key);
+                urls.delete(key);
+                if (url && ! [...urls.values()].includes(url)) {
+                    URL.revokeObjectURL(url);
+                }
+            };
+
+            window.ZenauraLinePhotos = {
+                show(input, file) {
+                    const img = input.closest('label')?.querySelector('[data-line-preview]');
+                    if (! img || ! file) return;
+                    const key = img.getAttribute('data-line-preview');
+                    release(key);
+                    const url = URL.createObjectURL(file);
+                    urls.set(key, url);
+                    img.src = url;
+                    img.classList.remove('hidden');
+                },
+                hide(key) {
+                    release(key);
+                    const img = previewImage(key);
+                    if (! img) return;
+                    img.removeAttribute('src');
+                    img.classList.add('hidden');
+                },
+                copy(from, to) {
+                    const url = urls.get(from);
+                    if (! url) return;
+                    urls.set(to, url);
+                    const img = previewImage(to);
+                    if (! img) return;
+                    img.src = url;
+                    img.classList.remove('hidden');
+                },
+            };
+
+            document.addEventListener('change', (event) => {
+                const input = event.target;
+                if (! (input instanceof HTMLInputElement) || ! input.matches('[data-line-photo]')) return;
+                const file = input.files?.[0];
+                if (file) window.ZenauraLinePhotos.show(input, file);
+            });
+
+            let lastLineKey = null;
+
+            const lineKeyFrom = (node) => {
+                const row = node?.closest?.('tr');
+                return row?.querySelector('[data-line-preview]')?.getAttribute('data-line-preview') || null;
+            };
+
+            const photoInputFor = (key) => {
+                if (! key) return null;
+                const img = previewImage(key);
+                return img?.closest('label')?.querySelector('[data-line-photo]') ?? null;
+            };
+
+            const imageFromClipboard = (data) => {
+                if (! data?.items) return null;
+                for (const item of data.items) {
+                    if (! item.type?.startsWith('image/')) continue;
+                    const blob = item.getAsFile();
+                    if (! blob) continue;
+                    const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+                    const name = blob.name && blob.name !== 'blob' ? blob.name : `pasted-image.${ext}`;
+                    return new File([blob], name, { type: blob.type || 'image/png' });
+                }
+                return null;
+            };
+
+            document.addEventListener('focusin', (event) => {
+                const key = lineKeyFrom(event.target);
+                if (key) lastLineKey = key;
+            });
+            document.addEventListener('pointerdown', (event) => {
+                const key = lineKeyFrom(event.target);
+                if (key) lastLineKey = key;
+            }, true);
+            document.addEventListener('paste', (event) => {
+                const file = imageFromClipboard(event.clipboardData);
+                if (! file) return;
+                const input = photoInputFor(lineKeyFrom(event.target)) || photoInputFor(lastLineKey);
+                if (! input) return;
+                event.preventDefault();
+                const transfer = new DataTransfer();
+                transfer.items.add(file);
+                input.files = transfer.files;
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            document.addEventListener('line-photo-reset', (event) => {
+                const key = event.detail?.key;
+                if (key) window.ZenauraLinePhotos.hide(key);
+            });
+            document.addEventListener('line-photo-copy', (event) => {
+                if (event.detail?.from && event.detail?.to) {
+                    window.ZenauraLinePhotos.copy(event.detail.from, event.detail.to);
+                }
+            });
+            document.addEventListener('livewire:navigate', () => {
+                [...urls.values()].forEach((url) => URL.revokeObjectURL(url));
+                urls.clear();
+            });
+        }
+    </script>
+
     <div class="card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="quote-table">
                 <thead>
                     <tr>
-                        <th class="w-14">Image</th>
+                        <th class="w-14" title="Click a row, then press Ctrl+V to paste a snip">Image</th>
                         <th class="w-36">Heading</th>
                         <th class="w-36">Code</th>
                         <th class="min-w-[18rem]">Description</th>
@@ -192,18 +303,21 @@
                                 <td colspan="4" class="px-3 py-2 text-right text-[10px] uppercase tracking-wide text-teal-100">Section heading</td>
                             </tr>
                         @endif
-                        <tr class="border-b border-stone-200 bg-white align-top hover:bg-sand/40" wire:key="line-{{ $i }}">
+                        <tr class="border-b border-stone-200 bg-white align-top hover:bg-sand/40" wire:key="line-{{ $item['line_key'] }}">
                             <td class="px-2 py-1.5">
-                                <label class="relative flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded bg-sand" title="Upload image">
+                                <label class="relative flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded bg-sand" title="Choose a file, or click this row and press Ctrl+V to paste a snip">
+                                    <span wire:ignore class="pointer-events-none absolute inset-0 z-10">
+                                        <img data-line-preview="{{ $item['line_key'] }}" alt="" class="hidden h-full w-full object-cover">
+                                    </span>
                                     @if (! empty($item['image']))
                                         <img src="{{ $item['image'] }}" alt="" class="h-10 w-10 object-cover">
                                     @else
                                         <span class="text-[9px] text-stone-400">Add</span>
                                     @endif
-                                    <span wire:loading wire:target="linePhotos.{{ $i }}" class="absolute inset-0 flex items-center justify-center bg-white/70 text-zenora">
+                                    <span wire:loading wire:target="linePhotos.{{ $i }}" class="absolute inset-0 z-20 flex items-center justify-center bg-white/70 text-zenora">
                                         <x-spinner class="h-4 w-4" />
                                     </span>
-                                    <input type="file" accept="image/*" class="absolute inset-0 cursor-pointer opacity-0" wire:model="linePhotos.{{ $i }}">
+                                    <input type="file" accept="image/*" data-line-photo class="absolute inset-0 z-30 cursor-pointer opacity-0" wire:model="linePhotos.{{ $i }}">
                                 </label>
                                 @error('linePhotos.'.$i)
                                     <p class="mt-0.5 max-w-[4.5rem] text-[9px] leading-tight text-red-600">{{ $message }}</p>

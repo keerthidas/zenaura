@@ -12,6 +12,7 @@ use App\Services\QuotationNumberService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -155,6 +156,15 @@ class QuotationEditor extends Component
 
         if ($this->lines === []) {
             $this->lines = [$this->blankItem()];
+        }
+    }
+
+    public function hydrate(): void
+    {
+        foreach ($this->lines as $index => $line) {
+            if (empty($line['line_key'])) {
+                $this->lines[$index]['line_key'] = (string) Str::uuid();
+            }
         }
     }
 
@@ -383,10 +393,14 @@ class QuotationEditor extends Component
             return;
         }
 
+        $key = $this->lines[$index]['line_key'] ?? null;
         unset($this->lines[$index]);
         $this->lines = array_values($this->lines);
         unset($this->linePhotos[$index]);
         $this->linePhotos = array_values($this->linePhotos);
+        if ($key) {
+            $this->dispatch('line-photo-reset', key: $key);
+        }
         $this->suggestions = [];
 
         if ($this->lines === []) {
@@ -401,10 +415,15 @@ class QuotationEditor extends Component
         }
 
         $copy = $this->lines[$index];
+        $from = $copy['line_key'] ?? null;
+        $copy['line_key'] = (string) Str::uuid();
         array_splice($this->lines, $index + 1, 0, [$copy]);
         $this->lines = array_values($this->lines);
         $this->spliceLinePhotos($index + 1, [$this->linePhotos[$index] ?? null]);
         $this->suggestions = [];
+        if ($from) {
+            $this->dispatch('line-photo-copy', from: $from, to: $copy['line_key']);
+        }
     }
 
     public function saveNewClient(): void
@@ -662,6 +681,10 @@ class QuotationEditor extends Component
         $this->lines[$index]['selling_price'] = (string) $product->selling_price;
         if ($changed) {
             unset($this->linePhotos[$index]);
+            $key = $this->lines[$index]['line_key'] ?? null;
+            if ($key) {
+                $this->dispatch('line-photo-reset', key: $key);
+            }
         }
 
         if ($changed || empty($this->linePhotos[$index])) {
@@ -681,6 +704,7 @@ class QuotationEditor extends Component
         $settings = CompanySetting::current();
 
         $line = QuotationCalculator::line(array_merge([
+            'line_key' => (string) Str::uuid(),
             'product_id' => null,
             'heading' => '',
             'placing_area' => '',
@@ -731,14 +755,19 @@ class QuotationEditor extends Component
             'linePhotos.'.$index => ['image', 'max:4096'],
         ]);
 
-        $this->lines[$index]['image'] = $this->linePhotos[$index]->temporaryUrl();
+        // The row previews the file in the browser. Livewire's signed temporary
+        // URL is rejected on the live server, so the thumbnail stayed broken until save.
     }
 
     protected function clearLineImage(int $index): void
     {
+        $key = $this->lines[$index]['line_key'] ?? null;
         unset($this->linePhotos[$index]);
         $this->lines[$index]['image'] = null;
         $this->lines[$index]['image_path'] = null;
+        if ($key) {
+            $this->dispatch('line-photo-reset', key: $key);
+        }
     }
 
     protected function lineImageUrl(\App\Models\QuotationItem $item): ?string

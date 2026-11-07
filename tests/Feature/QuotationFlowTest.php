@@ -467,6 +467,8 @@ class QuotationFlowTest extends TestCase
             ->set('client_id', $client->id)
             ->call('pickProduct', 0, $product->id)
             ->set('linePhotos.0', $file)
+            ->assertSet('lines.0.image', null)
+            ->assertSee('data-line-preview', false)
             ->call('save')
             ->assertHasNoErrors();
 
