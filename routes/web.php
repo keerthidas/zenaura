@@ -23,6 +23,7 @@ use App\Livewire\PurchaseOrders\Index as PurchaseOrdersIndex;
 use App\Livewire\PurchaseOrders\PurchaseOrderEditor;
 use App\Livewire\Quotations\Index as QuotationsIndex;
 use App\Livewire\Quotations\QuotationEditor;
+use App\Livewire\Reports\Sales as SalesReport;
 use App\Livewire\Settings\CompanyForm;
 use App\Livewire\Suppliers\Index as SuppliersIndex;
 use App\Livewire\Suppliers\SupplierForm;
@@ -53,6 +54,7 @@ Route::middleware('auth')->group(function () {
         ->name('media.show');
 
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::get('/reports', SalesReport::class)->name('reports.sales');
 
     Route::get('/products', ProductsIndex::class)->name('products.index');
     Route::get('/products/create', ProductForm::class)->name('products.create');

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\InvoiceNumberService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -116,6 +117,25 @@ class Quotation extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Hide a quotation once a newer revision of the same number exists.
+     *
+     * @param  Builder<Quotation>  $query
+     * @return Builder<Quotation>
+     */
+    public function scopeLatestRevision(Builder $query): Builder
+    {
+        $table = $query->getModel()->getTable();
+
+        return $query->whereNotExists(function ($later) use ($table) {
+            $later->selectRaw('1')
+                ->from($table.' as later_revisions')
+                ->whereColumn('later_revisions.base_number', $table.'.base_number')
+                ->whereNull('later_revisions.deleted_at')
+                ->whereRaw('COALESCE(later_revisions.revision, 0) > COALESCE('.$table.'.revision, 0)');
+        });
     }
 
     public function revisionLabel(): ?string

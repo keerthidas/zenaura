@@ -65,6 +65,7 @@
                 @php
                     $links = [
                         ['dashboard', 'Dashboard', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
+                        ['reports.sales', 'Reports', 'M3 3v18h18M7 14v4m5-9v9m5-5v5'],
                         ['quotations.index', 'Quotations', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
                         ['delivery-notes.index', 'Delivery notes', 'M4 4h16v16H4z M8 9h8m-8 4h8m-8 4h5'],
                         ['leads.index', 'Sales CRM', 'M16 21v-2a4 4 0 00-8 0v2m12-9a4 4 0 01-3-1.35M4 12a4 4 0 003 3.87M12 11a4 4 0 100-8 4 4 0 000 8zm8 3a4 4 0 00-3-3.87'],
@@ -117,6 +118,7 @@
             </div>
             <nav class="flex gap-2 overflow-x-auto border-b border-stone-200 bg-white px-3 py-2 text-sm lg:hidden" x-show="!collapsed" x-cloak>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('dashboard') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('dashboard') }}" wire:navigate>Home</a>
+                <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('reports.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('reports.sales') }}" wire:navigate>Reports</a>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('quotations.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('quotations.index') }}" wire:navigate>Quotes</a>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('delivery-notes.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('delivery-notes.index') }}" wire:navigate>Delivery notes</a>
                 <a class="whitespace-nowrap rounded-full px-3 py-1 {{ request()->routeIs('leads.*') ? 'bg-zenora-dark text-white' : 'bg-sand' }}" href="{{ route('leads.index') }}" wire:navigate>CRM</a>

@@ -350,6 +350,76 @@ class QuotationFlowTest extends TestCase
         $this->assertSame(2, (int) $next->revision);
     }
 
+    public function test_quotation_list_shows_only_the_latest_revision(): void
+    {
+        $this->seed();
+        $user = User::where('email', 'admin@zenaura.ae')->firstOrFail();
+        $client = Client::create([
+            'name' => 'Revision Customer',
+            'trn' => '100000000000003',
+            'emirate' => 'Dubai',
+        ]);
+        $product = Product::create([
+            'code' => 'REV-001',
+            'description' => 'Revision item',
+            'actual_price' => 80,
+            'selling_price' => 100,
+            'unit' => 'EACH',
+            'is_active' => true,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->set('client_id', $client->id)
+            ->call('pickProduct', 0, $product->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $original = Quotation::firstOrFail();
+        $original->update(['status' => 'sent']);
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->call('startRevision', $original->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $first = Quotation::query()->where('parent_id', $original->id)->firstOrFail();
+        $this->assertSame('sent', $original->fresh()->status);
+        $this->assertSame([$first->id], $this->listedQuotationIds());
+
+        Livewire::actingAs($user)
+            ->test(QuotationEditor::class)
+            ->call('startRevision', $first->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $second = Quotation::query()->where('parent_id', $first->id)->firstOrFail();
+        $this->assertSame('sent', $original->fresh()->status);
+        $this->assertSame('draft', $first->fresh()->status);
+        $this->assertSame([$second->id], $this->listedQuotationIds());
+
+        Livewire::actingAs($user)
+            ->test(\App\Livewire\Quotations\Index::class)
+            ->call('delete', $second->id);
+
+        $this->assertSame([$first->id], $this->listedQuotationIds());
+        $this->assertSame('sent', $original->fresh()->status);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function listedQuotationIds(): array
+    {
+        return collect(
+            Livewire::actingAs(User::where('email', 'admin@zenaura.ae')->firstOrFail())
+                ->test(\App\Livewire\Quotations\Index::class)
+                ->viewData('quotations')
+                ->items()
+        )->pluck('id')->all();
+    }
+
     public function test_status_can_be_updated_from_the_list(): void
     {
         $this->seed();

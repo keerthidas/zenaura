@@ -327,6 +327,7 @@ class Index extends Component
     public function render()
     {
         $quotations = Quotation::query()
+            ->latestRevision()
             ->with(['client', 'proformas.receipt'])
             ->withCount(['purchaseOrders as active_purchase_orders_count' => fn ($q) => $q->issued()])
             ->when($this->search, function ($q) {
