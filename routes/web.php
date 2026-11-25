@@ -5,6 +5,7 @@ use App\Http\Controllers\DeliveryNotePdfController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ProformaPdfController;
 use App\Http\Controllers\PurchaseOrderPdfController;
+use App\Http\Controllers\QuotationExcelController;
 use App\Http\Controllers\QuotationPdfController;
 use App\Http\Controllers\ReceiptPdfController;
 use App\Livewire\Auth\Login;
@@ -74,6 +75,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/quotations/create', QuotationEditor::class)->name('quotations.create');
     Route::get('/quotations/{quotation}/edit', QuotationEditor::class)->name('quotations.edit');
     Route::get('/quotations/{quotation}/pdf', QuotationPdfController::class)->name('quotations.pdf');
+    Route::get('/quotations/{quotation}/excel', QuotationExcelController::class)->name('quotations.excel');
     Route::get('/quotations/{quotation}/invoice', InvoicePdfController::class)->name('quotations.invoice');
     Route::get('/quotations/{quotation}/proformas/{proforma}', ProformaPdfController::class)->name('quotations.proforma');
     Route::get('/quotations/{quotation}/proformas/{proforma}/receipt/{receipt}', ReceiptPdfController::class)->name('quotations.receipt');

@@ -32,38 +32,28 @@ if (! function_exists('public_media_url')) {
 }
 
 if (! function_exists('pdf_data_uri')) {
-    function pdf_data_uri(?string $path): ?string
+    function pdf_data_uri(?string $path, ?int $maxEdge = null, int $jpegQuality = 75): ?string
     {
         if (! $path || ! \Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
             return null;
         }
 
         $full = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
-        if (! is_readable($full)) {
-            return null;
-        }
 
-        $mime = mime_content_type($full) ?: 'image/jpeg';
-
-        return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($full));
+        return \App\Support\PdfImage::dataUriFromFile($full, $maxEdge, $jpegQuality);
     }
 }
 
 if (! function_exists('pdf_public_data_uri')) {
-    function pdf_public_data_uri(?string $relativePath): ?string
+    function pdf_public_data_uri(?string $relativePath, ?int $maxEdge = null, int $jpegQuality = 75): ?string
     {
         if (! $relativePath) {
             return null;
         }
 
         $full = public_path(ltrim(str_replace('\\', '/', $relativePath), '/'));
-        if (! is_readable($full)) {
-            return null;
-        }
 
-        $mime = mime_content_type($full) ?: 'image/png';
-
-        return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($full));
+        return \App\Support\PdfImage::dataUriFromFile($full, $maxEdge, $jpegQuality);
     }
 }
 

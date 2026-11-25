@@ -15,7 +15,8 @@
         x-data="{
             collapsed: {{ request()->routeIs('quotations.create', 'quotations.edit') ? 'true' : 'false' }},
             wasQuoteEditor: {{ request()->routeIs('quotations.create', 'quotations.edit') ? 'true' : 'false' }},
-            pdfUrl: null,
+            exportUrl: null,
+            exportKind: 'pdf',
             isQuoteEditor() {
                 const path = window.location.pathname.replace(/\/+$/, '');
                 return /\/quotations\/create$/.test(path) || /\/quotations\/[^/]+\/edit$/.test(path);
@@ -33,18 +34,19 @@
                 this.collapsed = ! this.collapsed;
                 localStorage.setItem('zenaura.sidebarCollapsed', this.collapsed ? '1' : '0');
             },
-            openQuotationPdf(hide) {
-                const base = this.pdfUrl;
+            openQuotationExport(hide) {
+                const base = this.exportUrl;
                 if (! base) return;
                 const url = hide ? base + (base.includes('?') ? '&' : '?') + 'discount=hide' : base;
-                this.pdfUrl = null;
+                this.exportUrl = null;
                 window.open(url, '_blank', 'noopener');
             },
         }"
         x-init="applyRoute()"
-        x-on:livewire:navigated.window="applyRoute(); pdfUrl = null"
-        x-on:open-quotation-pdf.window="pdfUrl = $event.detail.url"
-        x-on:keydown.escape.window="pdfUrl = null"
+        x-on:livewire:navigated.window="applyRoute(); exportUrl = null"
+        x-on:open-quotation-pdf.window="exportKind = 'pdf'; exportUrl = $event.detail.url"
+        x-on:open-quotation-excel.window="exportKind = 'excel'; exportUrl = $event.detail.url"
+        x-on:keydown.escape.window="exportUrl = null"
     >
         <aside
             class="hidden w-64 shrink-0 flex-col bg-zenora-dark text-sand lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto {{ request()->routeIs('quotations.create', 'quotations.edit') ? '' : 'lg:flex' }}"
@@ -135,21 +137,21 @@
 
         <div
             x-cloak
-            x-show="pdfUrl"
+            x-show="exportUrl"
             x-transition.opacity
-            x-on:click.self="pdfUrl = null"
+            x-on:click.self="exportUrl = null"
             class="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="quotation-pdf-choice-title"
+            aria-labelledby="quotation-export-choice-title"
         >
             <div class="card w-full max-w-md p-6">
-                <h2 id="quotation-pdf-choice-title" class="font-display text-2xl">Open quotation PDF</h2>
-                <p class="mt-2 text-sm text-stone-600">With discount keeps the discount column. Hide discount leaves it off and prints each sales price after the discount is already applied.</p>
+                <h2 id="quotation-export-choice-title" class="font-display text-2xl" x-text="exportKind === 'excel' ? 'Download quotation Excel' : 'Open quotation PDF'"></h2>
+                <p class="mt-2 text-sm text-stone-600">With discount keeps the discount column. Hide discount leaves it off and uses each sales price after the discount is already applied.</p>
                 <div class="mt-5 flex flex-wrap justify-end gap-2">
-                    <button type="button" class="btn btn-ghost" x-on:click="pdfUrl = null">Cancel</button>
-                    <button type="button" class="btn btn-ghost" x-on:click="openQuotationPdf(true)">Hide discount</button>
-                    <button type="button" class="btn btn-primary" x-on:click="openQuotationPdf(false)">With discount</button>
+                    <button type="button" class="btn btn-ghost" x-on:click="exportUrl = null">Cancel</button>
+                    <button type="button" class="btn btn-ghost" x-on:click="openQuotationExport(true)">Hide discount</button>
+                    <button type="button" class="btn btn-primary" x-on:click="openQuotationExport(false)">With discount</button>
                 </div>
             </div>
         </div>

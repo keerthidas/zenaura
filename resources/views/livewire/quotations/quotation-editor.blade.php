@@ -43,6 +43,7 @@
             </div>
             @if ($quotation?->exists)
                 <button type="button" x-on:click="$dispatch('open-quotation-pdf', { url: @js(route('quotations.pdf', $quotation)) })" class="btn btn-ghost">Open PDF</button>
+                <button type="button" x-on:click="$dispatch('open-quotation-excel', { url: @js(route('quotations.excel', $quotation)) })" class="btn btn-ghost">Download Excel</button>
                 @if ($quotation->isAccepted())
                     <a href="{{ route('quotations.invoice', $quotation) }}" target="_blank" class="btn btn-ghost">Open invoice</a>
                 @endif

@@ -21,7 +21,8 @@ class QuotationPdfController extends Controller
         foreach ($quotation->items as $item) {
             $path = $item->product?->images->first()?->path;
             if ($path) {
-                $itemImages[$item->id] = pdf_data_uri($path);
+                // 64px JPEG thumbs — DomPDF embeds full source pixels otherwise (~11MB+ quotes).
+                $itemImages[$item->id] = pdf_data_uri($path, 64, 70);
             }
         }
 
